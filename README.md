@@ -833,7 +833,7 @@ in the Software without restriction...
 
 ### **Tác giả:**
 
-Được phát triển với ❤️ bởi AI Assistant
+Được phát triển với ❤️ bởi Minh Quang TTM63ĐH
 
 ---
 
@@ -841,8 +841,6 @@ in the Software without restriction...
 
 ### 🌟 **Nếu project hữu ích, hãy cho 1 star nhé!** 🌟
 
-[![GitHub stars](https://img.shields.io/github/stars/your-username/iot-led-matrix?style=social)](https://github.com/your-username/iot-led-matrix)
-[![GitHub forks](https://img.shields.io/github/forks/your-username/iot-led-matrix?style=social)](https://github.com/your-username/iot-led-matrix/fork)
 
 ---
 
