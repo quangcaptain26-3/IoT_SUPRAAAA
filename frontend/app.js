@@ -68,7 +68,10 @@ function updateMQTTStatus(status) {
  */
 async function apiCall(endpoint, options = {}) {
   try {
-    const response = await fetch(`${API_BASE}${endpoint}`, {
+    const url = `${API_BASE}${endpoint}`;
+    console.log(`📡 Gọi API: ${url}`);
+
+    const response = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
@@ -77,12 +80,20 @@ async function apiCall(endpoint, options = {}) {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error(`❌ API Error ${response.status}:`, errorText);
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
 
     return await response.json();
   } catch (error) {
     console.error(`❌ Lỗi API ${endpoint}:`, error);
+    if (
+      error.message.includes("Failed to fetch") ||
+      error.message.includes("CORS")
+    ) {
+      console.error("⚠️ CORS Error - Kiểm tra backend CORS settings");
+    }
     throw error;
   }
 }
