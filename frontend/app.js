@@ -3,7 +3,7 @@
  * Kết nối MQTT, gọi API, điều khiển LED
  */
 
-const API_BASE = window.location.origin;
+const API_BASE = "https://qiotbe.dev1.vimaru.edu.vn";
 // WebSocket MQTT - sử dụng cùng host với HTTP server
 const MQTT_BROKER = `ws://${window.location.hostname}:9001/mqtt`;
 let mqttClient = null;

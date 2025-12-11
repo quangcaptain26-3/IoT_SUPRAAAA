@@ -3,7 +3,7 @@
  * Hiển thị lịch sử dữ liệu và MQTT logs
  */
 
-const API_BASE = window.location.origin;
+const API_BASE = "https://qiotbe.dev1.vimaru.edu.vn";
 
 // ==================== Tab Management ====================
 
