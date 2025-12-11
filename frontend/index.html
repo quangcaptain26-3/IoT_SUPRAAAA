@@ -161,7 +161,17 @@
         </footer>
     </div>
 
+    <script>
+        console.log("🟢 HTML đã load!");
+        console.log("📍 Current URL:", window.location.href);
+        console.log("📍 Script sẽ load từ:", new URL("app.js", window.location.href).href);
+    </script>
     <script type="module" src="app.js"></script>
+    <script>
+        window.addEventListener("error", (e) => {
+            console.error("❌ Script Error:", e.message, e.filename, e.lineno);
+        });
+    </script>
 </body>
 
 </html>

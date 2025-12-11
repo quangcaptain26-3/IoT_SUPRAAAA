@@ -3,6 +3,8 @@
  * Kết nối MQTT, gọi API, điều khiển LED
  */
 
+console.log("🔵 Script app.js đã được load!");
+
 const API_BASE = "https://qiotbe.dev1.vimaru.edu.vn";
 // WebSocket MQTT - sử dụng cùng host với HTTP server
 const MQTT_BROKER = `ws://${window.location.hostname}:9001/mqtt`;
@@ -540,8 +542,14 @@ function init() {
 }
 
 // Chạy khi DOM ready
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
+console.log("🚀 Script đã load!");
+try {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+} catch (error) {
+  console.error("❌ Lỗi khởi tạo ứng dụng:", error);
+  alert("Lỗi khởi tạo ứng dụng: " + error.message);
 }
