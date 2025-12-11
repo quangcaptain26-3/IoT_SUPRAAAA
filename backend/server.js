@@ -35,19 +35,43 @@ app.use(express.static("../frontend")); // Serve static files
  */
 function initMqttClient() {
   return new Promise((resolve, reject) => {
-    const client = mqtt.connect(
-      `mqtt://${config.mqtt.host}:${config.mqtt.port}`
-    );
+    const mqttUrl = `mqtt://${config.mqtt.host}:${config.mqtt.port}`;
+    console.log(`📡 Đang kết nối MQTT Client đến: ${mqttUrl}`);
+
+    const client = mqtt.connect(mqttUrl, {
+      reconnectPeriod: 5000,
+      connectTimeout: 10000,
+    });
 
     client.on("connect", () => {
-      console.log("✅ MQTT Client đã kết nối");
+      console.log("✅ MQTT Client đã kết nối thành công!");
+      console.log(`   Connected: ${client.connected}`);
       resolve(client);
     });
 
     client.on("error", (error) => {
       console.error("❌ MQTT Client error:", error);
+      console.error(`   Connection status: ${client.connected}`);
       reject(error);
     });
+
+    client.on("close", () => {
+      console.log("🔌 MQTT Client đã đóng kết nối");
+    });
+
+    client.on("reconnect", () => {
+      console.log("🔄 MQTT Client đang kết nối lại...");
+    });
+
+    // Timeout sau 15 giây nếu không kết nối được
+    setTimeout(() => {
+      if (!client.connected) {
+        console.error(
+          "❌ MQTT Client timeout - không kết nối được sau 15 giây"
+        );
+        reject(new Error("MQTT connection timeout"));
+      }
+    }, 15000);
   });
 }
 
@@ -259,11 +283,32 @@ app.post("/api/message/send", async (req, res) => {
   try {
     const { message, mode } = req.body;
 
+    console.log(
+      `📨 Nhận request gửi message: "${message}", mode: ${mode || "default"}`
+    );
+
     if (!message) {
       return res.status(400).json({ error: "Thiếu message" });
     }
 
+    // Kiểm tra MQTT client
+    if (!mqttClient) {
+      console.error("❌ MQTT client chưa được khởi tạo!");
+      return res.status(503).json({ error: "MQTT client chưa sẵn sàng" });
+    }
+
+    if (!mqttClient.connected) {
+      console.error(
+        "❌ MQTT client chưa kết nối! Status:",
+        mqttClient.connected
+      );
+      return res
+        .status(503)
+        .json({ error: "MQTT client chưa kết nối đến broker" });
+    }
+
     const result = await publisherService.publishCustomMessage(message, mode);
+    console.log(`✅ Đã xử lý request gửi message thành công`);
     res.json(result);
   } catch (error) {
     console.error("❌ Lỗi gửi message:", error);

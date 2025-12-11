@@ -164,12 +164,32 @@
     <script>
         console.log("🟢 HTML đã load!");
         console.log("📍 Current URL:", window.location.href);
+        console.log("📍 API_BASE sẽ là: https://qiotbe.dev1.vimaru.edu.vn");
         console.log("📍 Script sẽ load từ:", new URL("app.js", window.location.href).href);
+
+        // Test button click
+        document.addEventListener("DOMContentLoaded", () => {
+            console.log("🟡 DOM Content Loaded!");
+            const sendBtn = document.getElementById("sendMessageBtn");
+            if (sendBtn) {
+                console.log("✅ Send button found!");
+                sendBtn.addEventListener("click", () => {
+                    console.log("🔴 Send button clicked!");
+                });
+            } else {
+                console.error("❌ Send button NOT found!");
+            }
+        });
     </script>
     <script type="module" src="app.js"></script>
     <script>
         window.addEventListener("error", (e) => {
-            console.error("❌ Script Error:", e.message, e.filename, e.lineno);
+            console.error("❌ Script Error:", e.message, e.filename, e.lineno, e.error);
+        });
+
+        // Log unhandled promise rejections
+        window.addEventListener("unhandledrejection", (e) => {
+            console.error("❌ Unhandled Promise Rejection:", e.reason);
         });
     </script>
 </body>

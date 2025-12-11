@@ -22,8 +22,17 @@ export class PublisherService {
   async publishCustomMessage(message, mode = null) {
     try {
       if (!this.mqttClient) {
+        console.error("❌ MQTT client is null!");
         throw new Error("MQTT client chưa được khởi tạo");
       }
+
+      // Kiểm tra MQTT client có connected không
+      if (!this.mqttClient.connected) {
+        console.error("❌ MQTT client chưa kết nối! Trạng thái:", this.mqttClient.connected);
+        throw new Error("MQTT client chưa kết nối đến broker");
+      }
+
+      console.log(`📤 Đang publish message: "${message}" đến topic: ${config.mqtt.topics.customMessage}`);
 
       // Lưu message vào database
       await this.messageModel.save({ message, mode });
@@ -31,6 +40,12 @@ export class PublisherService {
       // Publish message
       this.mqttClient.publish(config.mqtt.topics.customMessage, message, {
         qos: 1,
+      }, (error) => {
+        if (error) {
+          console.error("❌ Lỗi khi publish MQTT:", error);
+        } else {
+          console.log(`✅ Đã publish thành công đến ${config.mqtt.topics.customMessage}`);
+        }
       });
 
       // Log

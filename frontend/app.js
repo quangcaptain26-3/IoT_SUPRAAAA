@@ -72,14 +72,28 @@ async function apiCall(endpoint, options = {}) {
   try {
     const url = `${API_BASE}${endpoint}`;
     console.log(`📡 Gọi API: ${url}`);
+    console.log(`   Method: ${options.method || "GET"}`);
+    console.log(`   Body:`, options.body);
 
-    const response = await fetch(url, {
+    const fetchOptions = {
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
       },
       ...options,
-    });
+    };
+
+    console.log(`   Fetch options:`, fetchOptions);
+
+    const response = await fetch(url, fetchOptions);
+
+    console.log(
+      `📥 Response status: ${response.status} ${response.statusText}`
+    );
+    console.log(
+      `   Response headers:`,
+      Object.fromEntries(response.headers.entries())
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -87,14 +101,22 @@ async function apiCall(endpoint, options = {}) {
       throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log(`✅ API Response data:`, data);
+    return data;
   } catch (error) {
     console.error(`❌ Lỗi API ${endpoint}:`, error);
+    console.error(`   Error type:`, error.constructor.name);
+    console.error(`   Error message:`, error.message);
     if (
       error.message.includes("Failed to fetch") ||
-      error.message.includes("CORS")
+      error.message.includes("CORS") ||
+      error.name === "TypeError"
     ) {
-      console.error("⚠️ CORS Error - Kiểm tra backend CORS settings");
+      console.error("⚠️ CORS Error hoặc Network Error - Kiểm tra:");
+      console.error("   1. Backend có đang chạy không?");
+      console.error("   2. CORS settings trên backend");
+      console.error("   3. Network connection");
     }
     throw error;
   }
@@ -260,6 +282,10 @@ async function handleSendMessage() {
   const message = document.getElementById("customMessage").value.trim();
   const mode = document.getElementById("messageMode").value;
 
+  console.log("🔵 handleSendMessage được gọi");
+  console.log("   Message:", message);
+  console.log("   Mode:", mode);
+
   if (!message) {
     alert("Vui lòng nhập message");
     return;
@@ -270,14 +296,22 @@ async function handleSendMessage() {
   btn.textContent = "Đang gửi...";
 
   try {
-    await apiCall("/api/message/send", {
+    console.log("📤 Đang gọi API /api/message/send...");
+    const result = await apiCall("/api/message/send", {
       method: "POST",
       body: JSON.stringify({ message, mode }),
     });
 
+    console.log("✅ API response:", result);
     alert("✅ Đã gửi message!");
     document.getElementById("customMessage").value = "";
   } catch (error) {
+    console.error("❌ Lỗi trong handleSendMessage:", error);
+    console.error("   Error details:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
     alert("❌ Lỗi gửi message: " + error.message);
   } finally {
     btn.disabled = false;

@@ -25,7 +25,8 @@ const char* ssid = "PhamMinhQuang";        // Thay bằng SSID WiFi của bạn
 const char* password = "26032004"; // Thay bằng password WiFi của bạn
 
 // ==================== MQTT Configuration ====================
-const char* mqtt_server = "192.168.1.5"; // IP của MQTT broker (hoặc domain)
+// MQTT broker có domain riêng
+const char* mqtt_server = "qiot-mqtt.dev1.vimaru.edu.vn"; // Domain của MQTT broker server
 const int mqtt_port = 1883;
 const char* mqtt_client_id = "ESP8266_LED_Display";
 
