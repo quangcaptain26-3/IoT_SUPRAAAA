@@ -431,10 +431,22 @@ app.post("/api/auto/weather", async (req, res) => {
  * API: Health check
  */
 app.get("/api/health", (req, res) => {
+  const mqttStatus = mqttClient
+    ? mqttClient.connected
+      ? "connected"
+      : "disconnected"
+    : "not_initialized";
+
   res.json({
     status: "ok",
     timestamp: new Date().toISOString(),
-    mqtt: mqttClient ? "connected" : "disconnected",
+    mqtt: mqttStatus,
+    mqttClientExists: !!mqttClient,
+    mqttClientConnected: mqttClient ? mqttClient.connected : false,
+    broker: {
+      host: config.mqtt.host,
+      port: config.mqtt.port,
+    },
   });
 });
 

@@ -128,11 +128,30 @@ async function apiCall(endpoint, options = {}) {
 async function checkServerStatus() {
   try {
     const data = await apiCall("/api/health");
-    document.getElementById("serverStatus").textContent = "Online";
-    document.getElementById("serverStatus").className =
-      "status-value connected";
-    return true;
+    console.log("🏥 Health check response:", data);
+
+    const isOnline = data.status === "ok";
+    const mqttConnected = data.mqtt === "connected";
+
+    document.getElementById("serverStatus").textContent = isOnline
+      ? "Online"
+      : "Offline";
+    document.getElementById("serverStatus").className = isOnline
+      ? "status-value connected"
+      : "status-value disconnected";
+
+    // Cập nhật MQTT status
+    updateMQTTStatus(mqttConnected ? "connected" : "disconnected");
+
+    if (!mqttConnected) {
+      console.warn("⚠️ MQTT không kết nối! Status:", data.mqtt);
+      console.warn("   MQTT Client exists:", data.mqttClientExists);
+      console.warn("   MQTT Client connected:", data.mqttClientConnected);
+    }
+
+    return isOnline;
   } catch (error) {
+    console.error("❌ Health check failed:", error);
     document.getElementById("serverStatus").textContent = "Offline";
     document.getElementById("serverStatus").className =
       "status-value disconnected";
