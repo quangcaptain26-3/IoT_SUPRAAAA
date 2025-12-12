@@ -743,6 +743,303 @@ footer .btn-link {
   box-shadow: 0 0 10px var(--primary-glow);
 }
 
+/* ==================== QUERY CARD STYLES ==================== */
+
+/* Query Card */
+.query-card {
+  border: 2px solid var(--secondary-color);
+  background: linear-gradient(
+    135deg,
+    rgba(124, 58, 237, 0.1) 0%,
+    var(--card-bg) 50%,
+    rgba(0, 217, 255, 0.1) 100%
+  );
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+}
+
+.query-card:hover {
+  border-color: var(--secondary-color);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.5);
+}
+
+.query-card h2 {
+  background: linear-gradient(
+    135deg,
+    var(--secondary-color),
+    var(--primary-color)
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Query Options */
+.query-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.query-group {
+  padding: 20px;
+  background: var(--bg-dark);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--secondary-color);
+  transition: all 0.3s ease;
+}
+
+.query-group:hover {
+  border-left-color: var(--primary-color);
+  background: var(--card-bg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.query-group h3 {
+  margin-bottom: 16px;
+  color: var(--text-dark);
+  font-size: 1.05em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Query Results */
+.query-results {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--bg-dark);
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  min-height: 200px;
+  max-height: 500px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.query-results .placeholder-text {
+  text-align: center;
+  color: var(--text-light);
+  font-style: italic;
+  padding: 60px 20px;
+  font-size: 1.1em;
+}
+
+.query-results.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.query-results.loading::before {
+  content: "";
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Result Items */
+.result-header {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.result-header h3 {
+  color: var(--primary-color);
+  font-size: 1.2em;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.result-header .result-meta {
+  color: var(--text-light);
+  font-size: 0.9em;
+}
+
+.result-item {
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  border-left: 3px solid var(--primary-color);
+  transition: all 0.2s ease;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.result-item:hover {
+  background: var(--card-bg-hover);
+  border-left-color: var(--secondary-color);
+  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.result-item .item-label {
+  color: var(--text-light);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.result-item .item-value {
+  color: var(--text-color);
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.result-item .item-value.highlight {
+  color: var(--primary-color);
+  font-size: 1.3em;
+  text-shadow: 0 0 10px var(--primary-glow);
+}
+
+.result-item .item-time {
+  color: var(--text-light);
+  font-size: 0.8em;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.stat-card {
+  padding: 16px;
+  background: linear-gradient(135deg, var(--card-bg), var(--bg-dark));
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 16px var(--primary-glow);
+  transform: translateY(-4px);
+}
+
+.stat-card .stat-label {
+  color: var(--text-light);
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.stat-card .stat-value {
+  color: var(--primary-color);
+  font-size: 2em;
+  font-weight: 700;
+  text-shadow: 0 0 15px var(--primary-glow);
+  margin-bottom: 4px;
+}
+
+.stat-card .stat-unit {
+  color: var(--text-light);
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+/* Chart Container */
+.chart-container {
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--card-bg);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.chart-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.chart-label {
+  min-width: 120px;
+  color: var(--text-light);
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.chart-bar-fill {
+  flex: 1;
+  height: 24px;
+  background: linear-gradient(
+    90deg,
+    var(--primary-color),
+    var(--secondary-color)
+  );
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px var(--primary-glow);
+  transition: all 0.3s ease;
+}
+
+.chart-bar-fill:hover {
+  transform: scaleX(1.02);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.chart-bar-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+.chart-value {
+  min-width: 80px;
+  text-align: right;
+  color: var(--primary-color);
+  font-weight: 700;
+  font-size: 1em;
+}
+
 /* ==================== LOGS PAGE STYLES ==================== */
 
 /* Tabs Navigation */

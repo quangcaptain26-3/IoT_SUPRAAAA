@@ -101,7 +101,60 @@
                 <button id="sendMessageBtn" class="btn btn-primary">Gửi Message</button>
             </section>
 
-            <!-- Section 5: LED Settings -->
+            <!-- Section 5: Database Query -->
+            <section class="card query-card">
+                <h2>📊 Truy Vấn Dữ Liệu</h2>
+                <p class="subtitle">Xem thống kê và lịch sử dữ liệu từ cơ sở dữ liệu</p>
+
+                <!-- Query Options -->
+                <div class="query-options">
+                    <!-- Thời gian -->
+                    <div class="query-group">
+                        <h3>🌡️ Nhiệt Độ</h3>
+                        <div class="form-group">
+                            <label for="tempHours">Số giờ gần nhất:</label>
+                            <input type="number" id="tempHours" min="1" max="24" value="6" placeholder="Nhập số giờ">
+                        </div>
+                        <button id="queryTempBtn" class="btn btn-primary">Xem nhiệt độ theo giờ</button>
+                    </div>
+
+                    <!-- Tỷ giá -->
+                    <div class="query-group">
+                        <h3>💱 Tỷ Giá Trung Bình</h3>
+                        <div class="form-group">
+                            <label for="exchangePair">Cặp tiền:</label>
+                            <select id="exchangePair">
+                                <option value="USD/VND">USD → VND</option>
+                                <option value="EUR/VND">EUR → VND</option>
+                                <option value="GBP/VND">GBP → VND</option>
+                                <option value="JPY/VND">JPY → VND</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="exchangeHours">Số giờ gần nhất:</label>
+                            <input type="number" id="exchangeHours" min="1" max="48" value="12"
+                                placeholder="Nhập số giờ">
+                        </div>
+                        <button id="queryExchangeBtn" class="btn btn-primary">Xem tỷ giá trung bình</button>
+                    </div>
+
+                    <!-- Thống kê tổng quan -->
+                    <div class="query-group">
+                        <h3>📈 Thống Kê Tổng Quan</h3>
+                        <div class="button-group">
+                            <button id="queryStatsBtn" class="btn btn-secondary">Xem thống kê</button>
+                            <button id="queryRecentBtn" class="btn btn-secondary">Hoạt động gần đây</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Query Results Display -->
+                <div id="queryResults" class="query-results">
+                    <p class="placeholder-text">Chọn một truy vấn để xem kết quả</p>
+                </div>
+            </section>
+
+            <!-- Section 6: LED Settings -->
             <section class="card">
                 <h2>⚙️ Cài Đặt LED</h2>
 

@@ -591,7 +591,366 @@ function init() {
     document.getElementById("brightnessValue").textContent = e.target.value;
   });
 
+  // Event listeners - Query Buttons
+  document
+    .getElementById("queryTempBtn")
+    .addEventListener("click", handleQueryTemperature);
+  document
+    .getElementById("queryExchangeBtn")
+    .addEventListener("click", handleQueryExchange);
+  document
+    .getElementById("queryStatsBtn")
+    .addEventListener("click", handleQueryStats);
+  document
+    .getElementById("queryRecentBtn")
+    .addEventListener("click", handleQueryRecent);
+
   console.log("✅ Ứng dụng đã khởi tạo");
+}
+
+// ==================== QUERY HANDLERS ====================
+
+/**
+ * Truy vấn nhiệt độ theo giờ
+ */
+async function handleQueryTemperature() {
+  const hours = parseInt(document.getElementById("tempHours").value) || 6;
+  const resultsDiv = document.getElementById("queryResults");
+
+  // Show loading
+  resultsDiv.className = "query-results loading";
+  resultsDiv.innerHTML = "";
+
+  try {
+    const result = await apiCall(`/api/query/temperature?hours=${hours}`);
+
+    if (!result.success || !result.data || result.data.length === 0) {
+      resultsDiv.className = "query-results";
+      resultsDiv.innerHTML =
+        '<p class="placeholder-text">Không có dữ liệu trong khoảng thời gian này</p>';
+      return;
+    }
+
+    const { stats, data } = result;
+
+    // Build HTML
+    let html = `
+      <div class="result-header">
+        <h3>🌡️ Nhiệt độ ${hours} giờ gần nhất</h3>
+        <div class="result-meta">${data.length} bản ghi</div>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Trung bình</div>
+          <div class="stat-value">${stats.avgTemp}</div>
+          <div class="stat-unit">°C</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cao nhất</div>
+          <div class="stat-value">${stats.maxTemp}</div>
+          <div class="stat-unit">°C</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Thấp nhất</div>
+          <div class="stat-value">${stats.minTemp}</div>
+          <div class="stat-unit">°C</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Độ ẩm TB</div>
+          <div class="stat-value">${stats.avgHumidity}</div>
+          <div class="stat-unit">%</div>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <h4 style="color: var(--text-dark); margin-bottom: 16px;">📊 Biểu đồ nhiệt độ</h4>
+    `;
+
+    // Tạo chart bars (lấy tối đa 10 records gần nhất)
+    const chartData = data.slice(0, 10);
+    const maxTemp = Math.max(...chartData.map((d) => d.temperature));
+
+    chartData.forEach((item) => {
+      const percentage = (item.temperature / maxTemp) * 100;
+      html += `
+        <div class="chart-bar">
+          <div class="chart-label">${item.time_label}</div>
+          <div class="chart-bar-fill" style="width: ${percentage}%"></div>
+          <div class="chart-value">${item.temperature}°C</div>
+        </div>
+      `;
+    });
+
+    html += "</div>";
+
+    resultsDiv.className = "query-results";
+    resultsDiv.innerHTML = html;
+  } catch (error) {
+    resultsDiv.className = "query-results";
+    resultsDiv.innerHTML = `<p class="placeholder-text" style="color: var(--danger-color);">❌ Lỗi: ${error.message}</p>`;
+  }
+}
+
+/**
+ * Truy vấn tỷ giá trung bình
+ */
+async function handleQueryExchange() {
+  const hours = parseInt(document.getElementById("exchangeHours").value) || 12;
+  const currencyPair = document.getElementById("exchangePair").value;
+  const [base, target] = currencyPair.split("/");
+  const resultsDiv = document.getElementById("queryResults");
+
+  // Show loading
+  resultsDiv.className = "query-results loading";
+  resultsDiv.innerHTML = "";
+
+  try {
+    const result = await apiCall(
+      `/api/query/exchange?base=${base}&target=${target}&hours=${hours}`
+    );
+
+    if (!result.success || !result.data || result.data.length === 0) {
+      resultsDiv.className = "query-results";
+      resultsDiv.innerHTML =
+        '<p class="placeholder-text">Không có dữ liệu trong khoảng thời gian này</p>';
+      return;
+    }
+
+    const { stats, data } = result;
+
+    // Build HTML
+    let html = `
+      <div class="result-header">
+        <h3>💱 Tỷ giá ${base}/${target} - ${hours} giờ gần nhất</h3>
+        <div class="result-meta">${data.length} bản ghi</div>
+      </div>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Hiện tại</div>
+          <div class="stat-value">${stats.currentRate}</div>
+          <div class="stat-unit">VND</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Trung bình</div>
+          <div class="stat-value">${stats.avgRate}</div>
+          <div class="stat-unit">VND</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cao nhất</div>
+          <div class="stat-value">${stats.maxRate}</div>
+          <div class="stat-unit">VND</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Thấp nhất</div>
+          <div class="stat-value">${stats.minRate}</div>
+          <div class="stat-unit">VND</div>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <h4 style="color: var(--text-dark); margin-bottom: 16px;">📊 Biểu đồ tỷ giá</h4>
+    `;
+
+    // Tạo chart bars (lấy tối đa 10 records gần nhất)
+    const chartData = data.slice(0, 10);
+    const maxRate = Math.max(...chartData.map((d) => d.rate));
+
+    chartData.forEach((item) => {
+      const percentage = (item.rate / maxRate) * 100;
+      html += `
+        <div class="chart-bar">
+          <div class="chart-label">${item.time_label}</div>
+          <div class="chart-bar-fill" style="width: ${percentage}%"></div>
+          <div class="chart-value">${item.rate.toFixed(2)}</div>
+        </div>
+      `;
+    });
+
+    html += "</div>";
+
+    resultsDiv.className = "query-results";
+    resultsDiv.innerHTML = html;
+  } catch (error) {
+    resultsDiv.className = "query-results";
+    resultsDiv.innerHTML = `<p class="placeholder-text" style="color: var(--danger-color);">❌ Lỗi: ${error.message}</p>`;
+  }
+}
+
+/**
+ * Truy vấn thống kê tổng quan
+ */
+async function handleQueryStats() {
+  const resultsDiv = document.getElementById("queryResults");
+
+  // Show loading
+  resultsDiv.className = "query-results loading";
+  resultsDiv.innerHTML = "";
+
+  try {
+    const result = await apiCall("/api/query/stats");
+
+    if (!result.success) {
+      resultsDiv.className = "query-results";
+      resultsDiv.innerHTML =
+        '<p class="placeholder-text">Không thể lấy thống kê</p>';
+      return;
+    }
+
+    const { stats } = result;
+
+    // Build HTML
+    let html = `
+      <div class="result-header">
+        <h3>📈 Thống Kê Tổng Quan</h3>
+        <div class="result-meta">Cập nhật: ${new Date().toLocaleString(
+          "vi-VN"
+        )}</div>
+      </div>
+      
+      <h4 style="color: var(--primary-color); margin: 20px 0 12px 0; font-size: 1.1em;">📊 Tổng số bản ghi</h4>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Thời tiết</div>
+          <div class="stat-value">${stats.total.weather}</div>
+          <div class="stat-unit">records</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tỷ giá</div>
+          <div class="stat-value">${stats.total.exchange}</div>
+          <div class="stat-unit">records</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Messages</div>
+          <div class="stat-value">${stats.total.messages}</div>
+          <div class="stat-unit">records</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Logs</div>
+          <div class="stat-value">${stats.total.logs}</div>
+          <div class="stat-unit">records</div>
+        </div>
+      </div>
+      
+      <h4 style="color: var(--accent-color); margin: 20px 0 12px 0; font-size: 1.1em;">⏰ 24 giờ qua</h4>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Thời tiết</div>
+          <div class="stat-value">${stats.last24h.weather}</div>
+          <div class="stat-unit">records</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tỷ giá</div>
+          <div class="stat-value">${stats.last24h.exchange}</div>
+          <div class="stat-unit">records</div>
+        </div>
+      </div>
+    `;
+
+    // Latest data
+    if (stats.latest.weather) {
+      html += `
+        <h4 style="color: var(--warning-color); margin: 20px 0 12px 0; font-size: 1.1em;">🔥 Dữ liệu mới nhất</h4>
+        <div class="result-item">
+          <div class="item-label">Thời tiết</div>
+          <div class="item-value highlight">${
+            stats.latest.weather.temperature
+          }°C, ${stats.latest.weather.humidity}%</div>
+          <div class="item-time">${new Date(
+            stats.latest.weather.created_at
+          ).toLocaleString("vi-VN")}</div>
+        </div>
+      `;
+    }
+
+    if (stats.latest.exchange) {
+      html += `
+        <div class="result-item">
+          <div class="item-label">Tỷ giá</div>
+          <div class="item-value highlight">${
+            stats.latest.exchange.base_currency
+          }/${
+        stats.latest.exchange.target_currency
+      }: ${stats.latest.exchange.rate.toFixed(2)}</div>
+          <div class="item-time">${new Date(
+            stats.latest.exchange.created_at
+          ).toLocaleString("vi-VN")}</div>
+        </div>
+      `;
+    }
+
+    resultsDiv.className = "query-results";
+    resultsDiv.innerHTML = html;
+  } catch (error) {
+    resultsDiv.className = "query-results";
+    resultsDiv.innerHTML = `<p class="placeholder-text" style="color: var(--danger-color);">❌ Lỗi: ${error.message}</p>`;
+  }
+}
+
+/**
+ * Truy vấn hoạt động gần đây
+ */
+async function handleQueryRecent() {
+  const resultsDiv = document.getElementById("queryResults");
+
+  // Show loading
+  resultsDiv.className = "query-results loading";
+  resultsDiv.innerHTML = "";
+
+  try {
+    const result = await apiCall("/api/query/recent?limit=20");
+
+    if (!result.success || !result.data || result.data.length === 0) {
+      resultsDiv.className = "query-results";
+      resultsDiv.innerHTML =
+        '<p class="placeholder-text">Không có hoạt động nào</p>';
+      return;
+    }
+
+    const { data } = result;
+
+    // Build HTML
+    let html = `
+      <div class="result-header">
+        <h3>🕐 Hoạt Động Gần Đây</h3>
+        <div class="result-meta">${data.length} hoạt động</div>
+      </div>
+    `;
+
+    // Type icons
+    const typeIcons = {
+      weather: "🌡️",
+      exchange: "💱",
+      message: "✉️",
+    };
+
+    const typeLabels = {
+      weather: "Thời tiết",
+      exchange: "Tỷ giá",
+      message: "Message",
+    };
+
+    data.forEach((item) => {
+      const icon = typeIcons[item.type] || "📝";
+      const label = typeLabels[item.type] || item.type;
+      const time = new Date(item.created_at).toLocaleString("vi-VN");
+
+      html += `
+        <div class="result-item">
+          <div class="item-label">${icon} ${label}</div>
+          <div class="item-value">${item.data}</div>
+          <div class="item-time">${time}</div>
+        </div>
+      `;
+    });
+
+    resultsDiv.className = "query-results";
+    resultsDiv.innerHTML = html;
+  } catch (error) {
+    resultsDiv.className = "query-results";
+    resultsDiv.innerHTML = `<p class="placeholder-text" style="color: var(--danger-color);">❌ Lỗi: ${error.message}</p>`;
+  }
 }
 
 // Chạy khi DOM ready
