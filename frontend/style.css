@@ -773,6 +773,11 @@ footer .btn-link {
   background-clip: text;
 }
 
+/* Full Width Card */
+.full-width {
+  grid-column: 1 / -1;
+}
+
 /* Query Options */
 .query-options {
   display: grid;
