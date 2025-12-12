@@ -3,7 +3,8 @@
  * Hiển thị lịch sử dữ liệu và MQTT logs
  */
 
-const API_BASE = "https://qiotbe.dev1.vimaru.edu.vn";
+// API Base URL - sử dụng hostname hiện tại
+const API_BASE = `http://${window.location.hostname}:3000`;
 
 // ==================== Tab Management ====================
 
