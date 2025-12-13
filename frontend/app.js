@@ -1028,6 +1028,7 @@ async function handleQueryStats() {
  * Truy vấn hoạt động gần đây - từ logs và history
  */
 async function handleQueryRecent() {
+  console.log("🔵 handleQueryRecent được gọi");
   const resultsDiv = document.getElementById("queryResults");
 
   // Show loading
@@ -1035,21 +1036,28 @@ async function handleQueryRecent() {
   resultsDiv.innerHTML = "";
 
   try {
+    console.log("📤 Đang lấy dữ liệu từ history APIs...");
     // Lấy dữ liệu từ các history APIs
     const [weatherResult, exchangeResult, messageResult] = await Promise.all([
-      apiCall("/api/weather/history?limit=20").catch(() => ({
-        success: true,
-        data: [],
-      })),
-      apiCall("/api/exchange/history?limit=20").catch(() => ({
-        success: true,
-        data: [],
-      })),
-      apiCall("/api/message/history?limit=20").catch(() => ({
-        success: true,
-        data: [],
-      })),
+      apiCall("/api/weather/history?limit=20").catch((err) => {
+        console.error("❌ Lỗi weather history:", err);
+        return { success: true, data: [] };
+      }),
+      apiCall("/api/exchange/history?limit=20").catch((err) => {
+        console.error("❌ Lỗi exchange history:", err);
+        return { success: true, data: [] };
+      }),
+      apiCall("/api/message/history?limit=20").catch((err) => {
+        console.error("❌ Lỗi message history:", err);
+        return { success: true, data: [] };
+      }),
     ]);
+
+    console.log("✅ Đã lấy dữ liệu:", {
+      weather: weatherResult.data?.length || 0,
+      exchange: exchangeResult.data?.length || 0,
+      message: messageResult.data?.length || 0,
+    });
 
     const weatherData = (weatherResult.data || []).map((item) => ({
       type: "weather",
