@@ -825,6 +825,10 @@ footer .btn-link {
   max-height: 500px;
   overflow-y: auto;
   position: relative;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1;
 }
 
 .query-results .placeholder-text {
@@ -836,9 +840,11 @@ footer .btn-link {
 }
 
 .query-results.loading {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .query-results.loading::before {

@@ -635,6 +635,16 @@ function init() {
 // ==================== QUERY HANDLERS ====================
 
 /**
+ * Helper function: Đảm bảo queryResults element hiển thị
+ */
+function ensureQueryResultsVisible(resultsDiv) {
+  if (!resultsDiv) return;
+  resultsDiv.style.display = "block";
+  resultsDiv.style.visibility = "visible";
+  resultsDiv.style.opacity = "1";
+}
+
+/**
  * Truy vấn nhiệt độ theo phút - sử dụng history API
  */
 async function handleQueryTemperature() {
@@ -648,6 +658,9 @@ async function handleQueryTemperature() {
 
   console.log("🔍 Bắt đầu truy vấn nhiệt độ, phút:", minutes);
 
+  // Đảm bảo element hiển thị
+  ensureQueryResultsVisible(resultsDiv);
+
   // Show loading
   resultsDiv.className = "query-results loading";
   resultsDiv.innerHTML = "";
@@ -659,6 +672,7 @@ async function handleQueryTemperature() {
 
     if (!result.success || !result.data || result.data.length === 0) {
       console.warn("⚠️ Không có dữ liệu từ API");
+      ensureQueryResultsVisible(resultsDiv);
       resultsDiv.className = "query-results";
       resultsDiv.innerHTML = '<p class="placeholder-text">Không có dữ liệu</p>';
       return;
@@ -672,6 +686,7 @@ async function handleQueryTemperature() {
     );
 
     if (data.length === 0) {
+      ensureQueryResultsVisible(resultsDiv);
       resultsDiv.className = "query-results";
       resultsDiv.innerHTML =
         '<p class="placeholder-text">Không có dữ liệu trong khoảng thời gian này</p>';
@@ -783,6 +798,7 @@ async function handleQueryTemperature() {
     }, 100);
   } catch (error) {
     console.error("❌ Lỗi trong handleQueryTemperature:", error);
+    ensureQueryResultsVisible(resultsDiv);
     resultsDiv.className = "query-results";
     resultsDiv.innerHTML = `<p class="placeholder-text" style="color: var(--danger-color);">❌ Lỗi: ${error.message}</p>`;
   }
@@ -822,6 +838,7 @@ async function handleQueryExchange() {
 
     if (!result.success || !result.data || result.data.length === 0) {
       console.warn("⚠️ Không có dữ liệu từ API");
+      ensureQueryResultsVisible(resultsDiv);
       resultsDiv.className = "query-results";
       resultsDiv.innerHTML = '<p class="placeholder-text">Không có dữ liệu</p>';
       return;
@@ -838,6 +855,7 @@ async function handleQueryExchange() {
     );
 
     if (data.length === 0) {
+      ensureQueryResultsVisible(resultsDiv);
       resultsDiv.className = "query-results";
       resultsDiv.innerHTML =
         '<p class="placeholder-text">Không có dữ liệu trong khoảng thời gian này</p>';
@@ -951,6 +969,7 @@ async function handleQueryExchange() {
     resultsDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (error) {
     console.error("❌ Lỗi trong handleQueryExchange:", error);
+    ensureQueryResultsVisible(resultsDiv);
     resultsDiv.className = "query-results";
     resultsDiv.innerHTML = `<p class="placeholder-text" style="color: var(--danger-color);">❌ Lỗi: ${error.message}</p>`;
   }
@@ -1107,6 +1126,7 @@ async function handleQueryStats() {
     resultsDiv.className = "query-results";
     resultsDiv.innerHTML = html;
   } catch (error) {
+    ensureQueryResultsVisible(resultsDiv);
     resultsDiv.className = "query-results";
     resultsDiv.innerHTML = `<p class="placeholder-text" style="color: var(--danger-color);">❌ Lỗi: ${error.message}</p>`;
   }
@@ -1217,6 +1237,7 @@ async function handleQueryRecent() {
     resultsDiv.className = "query-results";
     resultsDiv.innerHTML = html;
   } catch (error) {
+    ensureQueryResultsVisible(resultsDiv);
     resultsDiv.className = "query-results";
     resultsDiv.innerHTML = `<p class="placeholder-text" style="color: var(--danger-color);">❌ Lỗi: ${error.message}</p>`;
   }
