@@ -635,10 +635,10 @@ function init() {
 // ==================== QUERY HANDLERS ====================
 
 /**
- * Truy vấn nhiệt độ theo giờ - sử dụng history API
+ * Truy vấn nhiệt độ theo phút - sử dụng history API
  */
 async function handleQueryTemperature() {
-  const hours = parseInt(document.getElementById("tempHours").value) || 6;
+  const minutes = parseInt(document.getElementById("tempMinutes").value) || 90;
   const resultsDiv = document.getElementById("queryResults");
 
   // Show loading
@@ -655,9 +655,9 @@ async function handleQueryTemperature() {
       return;
     }
 
-    // Lọc dữ liệu theo số giờ
+    // Lọc dữ liệu theo số phút
     const now = new Date();
-    const cutoffTime = new Date(now.getTime() - hours * 60 * 60 * 1000);
+    const cutoffTime = new Date(now.getTime() - minutes * 60 * 1000);
     let data = result.data.filter(
       (item) => new Date(item.created_at) >= cutoffTime
     );
@@ -707,7 +707,7 @@ async function handleQueryTemperature() {
     // Build HTML
     let html = `
       <div class="result-header">
-        <h3>🌡️ Nhiệt độ ${hours} giờ gần nhất</h3>
+        <h3>🌡️ Nhiệt độ ${minutes} phút gần nhất</h3>
         <div class="result-meta">${data.length} bản ghi</div>
       </div>
       
@@ -767,7 +767,8 @@ async function handleQueryTemperature() {
  * Truy vấn tỷ giá trung bình - sử dụng history API
  */
 async function handleQueryExchange() {
-  const hours = parseInt(document.getElementById("exchangeHours").value) || 12;
+  const minutes =
+    parseInt(document.getElementById("exchangeMinutes").value) || 180;
   const currencyPair = document.getElementById("exchangePair").value;
   const [base, target] = currencyPair.split("/");
   const resultsDiv = document.getElementById("queryResults");
@@ -786,9 +787,9 @@ async function handleQueryExchange() {
       return;
     }
 
-    // Lọc theo currency pair và số giờ
+    // Lọc theo currency pair và số phút
     const now = new Date();
-    const cutoffTime = new Date(now.getTime() - hours * 60 * 60 * 1000);
+    const cutoffTime = new Date(now.getTime() - minutes * 60 * 1000);
     let data = result.data.filter(
       (item) =>
         item.base_currency === base &&
@@ -835,7 +836,7 @@ async function handleQueryExchange() {
     // Build HTML
     let html = `
       <div class="result-header">
-        <h3>💱 Tỷ giá ${base}/${target} - ${hours} giờ gần nhất</h3>
+        <h3>💱 Tỷ giá ${base}/${target} - ${minutes} phút gần nhất</h3>
         <div class="result-meta">${data.length} bản ghi</div>
       </div>
       

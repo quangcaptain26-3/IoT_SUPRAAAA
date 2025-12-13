@@ -38,10 +38,11 @@
                     <div class="query-group">
                         <h3>🌡️ Nhiệt Độ</h3>
                         <div class="form-group">
-                            <label for="tempHours">Số giờ gần nhất:</label>
-                            <input type="number" id="tempHours" min="1" max="24" value="6" placeholder="Nhập số giờ">
+                            <label for="tempMinutes">Số phút gần nhất:</label>
+                            <input type="number" id="tempMinutes" min="15" max="1440" value="90"
+                                placeholder="Nhập số phút">
                         </div>
-                        <button id="queryTempBtn" class="btn btn-primary">Xem nhiệt độ theo giờ</button>
+                        <button id="queryTempBtn" class="btn btn-primary">Xem nhiệt độ theo phút</button>
                     </div>
 
                     <!-- Tỷ giá -->
@@ -57,9 +58,9 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="exchangeHours">Số giờ gần nhất:</label>
-                            <input type="number" id="exchangeHours" min="1" max="48" value="12"
-                                placeholder="Nhập số giờ">
+                            <label for="exchangeMinutes">Số phút gần nhất:</label>
+                            <input type="number" id="exchangeMinutes" min="15" max="2880" value="180"
+                                placeholder="Nhập số phút">
                         </div>
                         <button id="queryExchangeBtn" class="btn btn-primary">Xem tỷ giá trung bình</button>
                     </div>
