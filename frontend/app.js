@@ -24,8 +24,22 @@ let mqttClient = null;
  */
 function connectMQTT() {
   try {
+    // Kiểm tra mqtt library đã load chưa (từ CDN, sẽ có trong window.mqtt)
+    const mqttLib =
+      typeof window !== "undefined" && window.mqtt ? window.mqtt : null;
+
+    if (!mqttLib) {
+      console.error(
+        "❌ MQTT library chưa được load. Vui lòng đợi một chút và thử lại."
+      );
+      updateMQTTStatus("disconnected");
+      // Retry after 1 second
+      setTimeout(connectMQTT, 1000);
+      return;
+    }
+
     console.log("🔌 Đang kết nối EMQX Cloud:", MQTT_BROKER);
-    mqttClient = mqtt.connect(MQTT_BROKER, MQTT_OPTIONS);
+    mqttClient = mqttLib.connect(MQTT_BROKER, MQTT_OPTIONS);
 
     mqttClient.on("connect", () => {
       console.log("✅ Đã kết nối EMQX Cloud!");
