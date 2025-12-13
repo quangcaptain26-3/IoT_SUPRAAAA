@@ -47,8 +47,8 @@ export const config = {
 
   // Cron settings (giây)
   cron: {
-    weatherInterval: parseInt(process.env.WEATHER_INTERVAL) || 300, // 5 phút
-    exchangeInterval: parseInt(process.env.EXCHANGE_INTERVAL) || 600, // 10 phút
+    weatherInterval: parseInt(process.env.WEATHER_INTERVAL) || 900, // 15 phút
+    exchangeInterval: parseInt(process.env.EXCHANGE_INTERVAL) || 900, // 15 phút
   },
 
   // Default location (lat/lon)

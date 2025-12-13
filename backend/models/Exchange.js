@@ -61,23 +61,11 @@ export class ExchangeModel {
    * @param {string} targetCurrency - Tiền tệ đích (optional)
    */
   async getLatest(baseCurrency = null, targetCurrency = null) {
-    let sql = `SELECT * FROM exchange WHERE 1=1`;
-    const params = [];
-
-    if (baseCurrency) {
-      sql += ` AND base_currency = ?`;
-      params.push(baseCurrency);
-    }
-
-    if (targetCurrency) {
-      sql += ` AND target_currency = ?`;
-      params.push(targetCurrency);
-    }
-
-    sql += ` ORDER BY created_at DESC LIMIT 1`;
+    // Đơn giản: chỉ lấy record mới nhất
+    const sql = `SELECT * FROM exchange ORDER BY created_at DESC LIMIT 1`;
 
     try {
-      const rows = await query(this.db, sql, params);
+      const rows = await query(this.db, sql);
       return rows.length > 0 ? rows[0] : null;
     } catch (error) {
       console.error("❌ Lỗi lấy dữ liệu tỉ giá mới nhất:", error);

@@ -73,11 +73,8 @@ export class WeatherModel {
    * Lấy dữ liệu thời tiết mới nhất
    */
   async getLatest() {
-    const sql = `
-      SELECT * FROM weather 
-      ORDER BY created_at DESC 
-      LIMIT 1
-    `;
+    // Đơn giản: chỉ lấy record mới nhất
+    const sql = `SELECT * FROM weather ORDER BY created_at DESC LIMIT 1`;
 
     try {
       const rows = await query(this.db, sql);
