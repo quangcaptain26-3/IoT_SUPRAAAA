@@ -29,12 +29,10 @@ function connectMQTT() {
       typeof window !== "undefined" && window.mqtt ? window.mqtt : null;
 
     if (!mqttLib) {
-      console.error(
-        "❌ MQTT library chưa được load. Vui lòng đợi một chút và thử lại."
-      );
+      console.warn("⚠️ MQTT library chưa load. Retry sau 200ms...");
       updateMQTTStatus("disconnected");
-      // Retry after 1 second
-      setTimeout(connectMQTT, 1000);
+      // Retry nhanh hơn (200ms thay vì 1000ms)
+      setTimeout(connectMQTT, 200);
       return;
     }
 
@@ -552,8 +550,17 @@ function init() {
   checkServerStatus();
   setInterval(checkServerStatus, 30000); // Check mỗi 30 giây
 
-  // Kết nối MQTT (EMQX Cloud)
-  connectMQTT();
+  // Đợi mqtt library load xong rồi mới kết nối MQTT
+  function waitForMqtt() {
+    if (typeof window !== "undefined" && window.mqtt) {
+      console.log("✅ MQTT library đã sẵn sàng");
+      connectMQTT();
+    } else {
+      // Retry nhanh (100ms) khi script CDN chưa load xong
+      setTimeout(waitForMqtt, 100);
+    }
+  }
+  waitForMqtt();
 
   // Load dữ liệu ban đầu
   loadCurrentWeather();

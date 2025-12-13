@@ -234,8 +234,8 @@
             }
         });
     </script>
-    <!-- MQTT.js library -->
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <!-- MQTT.js library từ npm (qua CDN) - Load trước app.js -->
+    <script src="https://unpkg.com/mqtt@5.3.2/dist/mqtt.min.js"></script>
     <script type="module" src="app.js"></script>
     <script>
         window.addEventListener("error", (e) => {
