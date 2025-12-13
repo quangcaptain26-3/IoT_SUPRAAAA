@@ -612,7 +612,7 @@ function init() {
 // ==================== QUERY HANDLERS ====================
 
 /**
- * Truy vấn nhiệt độ theo giờ
+ * Truy vấn nhiệt độ theo giờ - sử dụng history API
  */
 async function handleQueryTemperature() {
   const hours = parseInt(document.getElementById("tempHours").value) || 6;
@@ -623,16 +623,63 @@ async function handleQueryTemperature() {
   resultsDiv.innerHTML = "";
 
   try {
-    const result = await apiCall(`/api/query/temperature?hours=${hours}`);
+    // Sử dụng history API thay vì query API
+    const result = await apiCall("/api/weather/history?limit=100");
 
     if (!result.success || !result.data || result.data.length === 0) {
+      resultsDiv.className = "query-results";
+      resultsDiv.innerHTML = '<p class="placeholder-text">Không có dữ liệu</p>';
+      return;
+    }
+
+    // Lọc dữ liệu theo số giờ
+    const now = new Date();
+    const cutoffTime = new Date(now.getTime() - hours * 60 * 60 * 1000);
+    let data = result.data.filter(
+      (item) => new Date(item.created_at) >= cutoffTime
+    );
+
+    if (data.length === 0) {
       resultsDiv.className = "query-results";
       resultsDiv.innerHTML =
         '<p class="placeholder-text">Không có dữ liệu trong khoảng thời gian này</p>';
       return;
     }
 
-    const { stats, data } = result;
+    // Tính toán stats từ dữ liệu
+    const stats = {
+      count: data.length,
+      avgTemp:
+        data.length > 0
+          ? (
+              data.reduce((sum, item) => sum + item.temperature, 0) /
+              data.length
+            ).toFixed(1)
+          : 0,
+      maxTemp:
+        data.length > 0
+          ? Math.max(...data.map((item) => item.temperature)).toFixed(1)
+          : 0,
+      minTemp:
+        data.length > 0
+          ? Math.min(...data.map((item) => item.temperature)).toFixed(1)
+          : 0,
+      avgHumidity:
+        data.length > 0
+          ? (
+              data.reduce((sum, item) => sum + item.humidity, 0) / data.length
+            ).toFixed(1)
+          : 0,
+    };
+
+    // Format data với time_label
+    data = data.map((item) => ({
+      ...item,
+      time_label: new Date(item.created_at).toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    }));
 
     // Build HTML
     let html = `
@@ -694,7 +741,7 @@ async function handleQueryTemperature() {
 }
 
 /**
- * Truy vấn tỷ giá trung bình
+ * Truy vấn tỷ giá trung bình - sử dụng history API
  */
 async function handleQueryExchange() {
   const hours = parseInt(document.getElementById("exchangeHours").value) || 12;
@@ -707,18 +754,60 @@ async function handleQueryExchange() {
   resultsDiv.innerHTML = "";
 
   try {
-    const result = await apiCall(
-      `/api/query/exchange?base=${base}&target=${target}&hours=${hours}`
-    );
+    // Sử dụng history API thay vì query API
+    const result = await apiCall("/api/exchange/history?limit=100");
 
     if (!result.success || !result.data || result.data.length === 0) {
+      resultsDiv.className = "query-results";
+      resultsDiv.innerHTML = '<p class="placeholder-text">Không có dữ liệu</p>';
+      return;
+    }
+
+    // Lọc theo currency pair và số giờ
+    const now = new Date();
+    const cutoffTime = new Date(now.getTime() - hours * 60 * 60 * 1000);
+    let data = result.data.filter(
+      (item) =>
+        item.base_currency === base &&
+        item.target_currency === target &&
+        new Date(item.created_at) >= cutoffTime
+    );
+
+    if (data.length === 0) {
       resultsDiv.className = "query-results";
       resultsDiv.innerHTML =
         '<p class="placeholder-text">Không có dữ liệu trong khoảng thời gian này</p>';
       return;
     }
 
-    const { stats, data } = result;
+    // Tính toán stats từ dữ liệu
+    const stats = {
+      count: data.length,
+      avgRate:
+        data.length > 0
+          ? (
+              data.reduce((sum, item) => sum + item.rate, 0) / data.length
+            ).toFixed(2)
+          : 0,
+      maxRate:
+        data.length > 0
+          ? Math.max(...data.map((item) => item.rate)).toFixed(2)
+          : 0,
+      minRate:
+        data.length > 0
+          ? Math.min(...data.map((item) => item.rate)).toFixed(2)
+          : 0,
+      currentRate: data.length > 0 ? data[0].rate.toFixed(2) : 0,
+    };
+
+    // Format data với time_label
+    data = data.map((item) => ({
+      ...item,
+      time_label: new Date(item.created_at).toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    }));
 
     // Build HTML
     let html = `
@@ -780,7 +869,7 @@ async function handleQueryExchange() {
 }
 
 /**
- * Truy vấn thống kê tổng quan
+ * Truy vấn thống kê tổng quan - tính từ history
  */
 async function handleQueryStats() {
   const resultsDiv = document.getElementById("queryResults");
@@ -790,16 +879,62 @@ async function handleQueryStats() {
   resultsDiv.innerHTML = "";
 
   try {
-    const result = await apiCall("/api/query/stats");
+    // Lấy tất cả history và tính toán stats
+    const [weatherResult, exchangeResult, messageResult, logsResult] =
+      await Promise.all([
+        apiCall("/api/weather/history?limit=1000").catch(() => ({
+          success: true,
+          data: [],
+        })),
+        apiCall("/api/exchange/history?limit=1000").catch(() => ({
+          success: true,
+          data: [],
+        })),
+        apiCall("/api/message/history?limit=1000").catch(() => ({
+          success: true,
+          data: [],
+        })),
+        apiCall("/api/logs?limit=1000").catch(() => ({
+          success: true,
+          data: [],
+        })),
+      ]);
 
-    if (!result.success) {
-      resultsDiv.className = "query-results";
-      resultsDiv.innerHTML =
-        '<p class="placeholder-text">Không thể lấy thống kê</p>';
-      return;
-    }
+    const weatherData = weatherResult.data || [];
+    const exchangeData = exchangeResult.data || [];
+    const messageData = messageResult.data || [];
+    const logsData = logsResult.data || [];
 
-    const { stats } = result;
+    // Tính 24h qua
+    const now = new Date();
+    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const weatherLast24h = weatherData.filter(
+      (item) => new Date(item.created_at) >= last24h
+    );
+    const exchangeLast24h = exchangeData.filter(
+      (item) => new Date(item.created_at) >= last24h
+    );
+
+    // Latest data
+    const latestWeather = weatherData[0] || null;
+    const latestExchange = exchangeData[0] || null;
+
+    const stats = {
+      total: {
+        weather: weatherData.length,
+        exchange: exchangeData.length,
+        messages: messageData.length,
+        logs: logsData.length,
+      },
+      last24h: {
+        weather: weatherLast24h.length,
+        exchange: exchangeLast24h.length,
+      },
+      latest: {
+        weather: latestWeather,
+        exchange: latestExchange,
+      },
+    };
 
     // Build HTML
     let html = `
@@ -890,7 +1025,7 @@ async function handleQueryStats() {
 }
 
 /**
- * Truy vấn hoạt động gần đây
+ * Truy vấn hoạt động gần đây - từ logs và history
  */
 async function handleQueryRecent() {
   const resultsDiv = document.getElementById("queryResults");
@@ -900,16 +1035,53 @@ async function handleQueryRecent() {
   resultsDiv.innerHTML = "";
 
   try {
-    const result = await apiCall("/api/query/recent?limit=20");
+    // Lấy dữ liệu từ các history APIs
+    const [weatherResult, exchangeResult, messageResult] = await Promise.all([
+      apiCall("/api/weather/history?limit=20").catch(() => ({
+        success: true,
+        data: [],
+      })),
+      apiCall("/api/exchange/history?limit=20").catch(() => ({
+        success: true,
+        data: [],
+      })),
+      apiCall("/api/message/history?limit=20").catch(() => ({
+        success: true,
+        data: [],
+      })),
+    ]);
 
-    if (!result.success || !result.data || result.data.length === 0) {
+    const weatherData = (weatherResult.data || []).map((item) => ({
+      type: "weather",
+      data: `${item.temperature}°C, ${item.humidity}%`,
+      created_at: item.created_at,
+    }));
+
+    const exchangeData = (exchangeResult.data || []).map((item) => ({
+      type: "exchange",
+      data: `${item.base_currency}/${item.target_currency}: ${item.rate.toFixed(
+        2
+      )}`,
+      created_at: item.created_at,
+    }));
+
+    const messageData = (messageResult.data || []).map((item) => ({
+      type: "message",
+      data: item.message,
+      created_at: item.created_at,
+    }));
+
+    // Gộp và sắp xếp theo thời gian
+    const data = [...weatherData, ...exchangeData, ...messageData]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 20);
+
+    if (data.length === 0) {
       resultsDiv.className = "query-results";
       resultsDiv.innerHTML =
         '<p class="placeholder-text">Không có hoạt động nào</p>';
       return;
     }
-
-    const { data } = result;
 
     // Build HTML
     let html = `
