@@ -388,11 +388,11 @@ let mqttClient = null;
 ```javascript
 // Line 9-11
 const API_BASE = "https://qiotbe.dev1.vimaru.edu.vn";
-const MQTT_BROKER = "wss://xxx.emqxsl.com:8084/mqtt";
+const MQTT_BROKER = "wss://z0d3bf33.ala.asia-southeast1.emqxsl.com:8084/mqtt";
 const MQTT_OPTIONS = {
-  clientId: `web_client_${Math.random().toString(16).substr(2, 8)}`,
-  username: "web_client",
-  password: "web_secure_password_789",
+  clientId: `qiot-fe_${Math.random().toString(16).substr(2, 8)}`,
+  username: "qiot-fe",
+  password: "qbe123",
   clean: true,
   reconnectPeriod: 5000,
 };

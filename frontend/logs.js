@@ -5,6 +5,14 @@
 
 // API Base URL - Backend server
 const API_BASE = "https://qiotbe.dev1.vimaru.edu.vn";
+const MQTT_BROKER = "wss://z0d3bf33.ala.asia-southeast1.emqxsl.com:8084/mqtt";
+const MQTT_OPTIONS = {
+  clientId: `qiot-fe_${Math.random().toString(16).substr(2, 8)}`,
+  username: "qiot-fe",
+  password: "qbe123",
+  clean: true,
+  reconnectPeriod: 5000,
+};
 
 // ==================== Tab Management ====================
 

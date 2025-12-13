@@ -7,8 +7,14 @@ console.log("🔵 Script app.js đã được load!");
 
 // API Base URL - Backend server
 const API_BASE = "https://qiotbe.dev1.vimaru.edu.vn";
-// WebSocket MQTT - sử dụng hostname hiện tại
-const MQTT_BROKER = `ws://${window.location.hostname}:9001/mqtt`;
+const MQTT_BROKER = "wss://z0d3bf33.ala.asia-southeast1.emqxsl.com:8084/mqtt";
+const MQTT_OPTIONS = {
+  clientId: `qiot-fe_${Math.random().toString(16).substr(2, 8)}`,
+  username: "qiot-fe",
+  password: "qbe123",
+  clean: true,
+  reconnectPeriod: 5000,
+};
 let mqttClient = null;
 
 // ==================== MQTT Connection ====================
@@ -18,13 +24,11 @@ let mqttClient = null;
  */
 function connectMQTT() {
   try {
-    mqttClient = mqtt.connect(MQTT_BROKER, {
-      clientId: `web_client_${Math.random().toString(16).substr(2, 8)}`,
-      reconnectPeriod: 5000,
-    });
+    console.log("🔌 Đang kết nối EMQX Cloud:", MQTT_BROKER);
+    mqttClient = mqtt.connect(MQTT_BROKER, MQTT_OPTIONS);
 
     mqttClient.on("connect", () => {
-      console.log("✅ Đã kết nối MQTT");
+      console.log("✅ Đã kết nối EMQX Cloud!");
       updateMQTTStatus("connected");
     });
 
@@ -534,10 +538,8 @@ function init() {
   checkServerStatus();
   setInterval(checkServerStatus, 30000); // Check mỗi 30 giây
 
-  // Cập nhật MQTT status (giả định active nếu server online)
-  checkServerStatus().then((online) => {
-    updateMQTTStatus(online ? "connected" : "disconnected");
-  });
+  // Kết nối MQTT (EMQX Cloud)
+  connectMQTT();
 
   // Load dữ liệu ban đầu
   loadCurrentWeather();

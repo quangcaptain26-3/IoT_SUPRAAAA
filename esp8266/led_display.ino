@@ -15,6 +15,7 @@
  */
 
 #include <ESP8266WiFi.h>
+#include <WiFiClientSecure.h>  // SSL/TLS support for EMQX Cloud
 #include <PubSubClient.h>
 #include <MD_Parola.h>
 #include <MD_MAX72XX.h>
@@ -24,10 +25,11 @@
 const char* ssid = "PhamMinhQuang";        // Thay bằng SSID WiFi của bạn
 const char* password = "26032004"; // Thay bằng password WiFi của bạn
 
-// ==================== MQTT Configuration ====================
-// MQTT broker có domain riêng
-const char* mqtt_server = "qiot-mqtt.dev1.vimaru.edu.vn"; // Domain của MQTT broker server
-const int mqtt_port = 1883;
+// ==================== MQTT Configuration (EMQX Cloud) ====================
+const char* mqtt_server = "z0d3bf33.ala.asia-southeast1.emqxsl.com";  // EMQX Cloud cluster
+const int mqtt_port = 8883;  // TLS/SSL port
+const char* mqtt_user = "esp8266_client";
+const char* mqtt_password = "esp23";  
 const char* mqtt_client_id = "ESP8266_LED_Display";
 
 // MQTT Topics
@@ -49,7 +51,7 @@ const char* topic_led_settings = "home/led/settings";
 
 // Tạo instances
 MD_Parola myDisplay = MD_Parola(HARDWARE_TYPE, CS_PIN, MAX_DEVICES);
-WiFiClient espClient;
+WiFiClientSecure espClient;  // SSL/TLS client for EMQX Cloud
 PubSubClient client(espClient);
 
 // ==================== LED Settings ====================
@@ -69,6 +71,9 @@ const unsigned long messageTimeout = 30000; // 30 giây timeout
 void setup() {
   Serial.begin(115200);
   delay(100);
+  
+  // Bỏ qua verify SSL certificate (cần thiết cho EMQX Cloud)
+  espClient.setInsecure();
   
   Serial.println("\n\n=== ESP8266 LED Matrix Display ===");
   
@@ -166,8 +171,10 @@ void connect_mqtt() {
     Serial.print(":");
     Serial.println(mqtt_port);
     
-    if (client.connect(mqtt_client_id)) {
-      Serial.println(" ✅ Đã kết nối MQTT!");
+    if (client.connect(mqtt_client_id, mqtt_user, mqtt_password)) {
+      Serial.println(" ✅ Đã kết nối EMQX Cloud!");
+      Serial.print("  Username: ");
+      Serial.println(mqtt_user);
       
       // Subscribe các topics
       client.subscribe(topic_weather_led);

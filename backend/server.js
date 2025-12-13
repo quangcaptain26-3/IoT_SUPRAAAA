@@ -1,12 +1,7 @@
-/**
- * Main server file
- * Khởi tạo Express API, MQTT Broker, và các services
- */
-
 import express from "express";
 import cors from "cors";
 import { initDatabase, query } from "./database.js";
-import { initMqttBroker, publish } from "./mqttBroker.js";
+import { initMqttClient, publish } from "./mqttClient.js";
 import { config } from "./config.js";
 import { WeatherModel } from "./models/Weather.js";
 import { ExchangeModel } from "./models/Exchange.js";
@@ -30,50 +25,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("../frontend")); // Serve static files
 
-/**
- * Khởi tạo MQTT Client để publish messages
- */
-function initMqttClient() {
-  return new Promise((resolve, reject) => {
-    const mqttUrl = `mqtt://${config.mqtt.host}:${config.mqtt.port}`;
-    console.log(`📡 Đang kết nối MQTT Client đến: ${mqttUrl}`);
-
-    const client = mqtt.connect(mqttUrl, {
-      reconnectPeriod: 5000,
-      connectTimeout: 10000,
-    });
-
-    client.on("connect", () => {
-      console.log("✅ MQTT Client đã kết nối thành công!");
-      console.log(`   Connected: ${client.connected}`);
-      resolve(client);
-    });
-
-    client.on("error", (error) => {
-      console.error("❌ MQTT Client error:", error);
-      console.error(`   Connection status: ${client.connected}`);
-      reject(error);
-    });
-
-    client.on("close", () => {
-      console.log("🔌 MQTT Client đã đóng kết nối");
-    });
-
-    client.on("reconnect", () => {
-      console.log("🔄 MQTT Client đang kết nối lại...");
-    });
-
-    // Timeout sau 15 giây nếu không kết nối được
-    setTimeout(() => {
-      if (!client.connected) {
-        console.error(
-          "❌ MQTT Client timeout - không kết nối được sau 15 giây"
-        );
-        reject(new Error("MQTT connection timeout"));
-      }
-    }, 15000);
-  });
-}
 
 /**
  * Khởi tạo cron jobs để tự động lấy dữ liệu
@@ -461,15 +412,11 @@ async function startServer() {
     console.log("📦 Đang khởi tạo database...");
     db = await initDatabase();
 
-    // 2. Khởi tạo MQTT Broker
-    console.log("📡 Đang khởi tạo MQTT Broker...");
-    await initMqttBroker(db);
+    // 2. Khởi tạo MQTT Client (EMQX Cloud)
+    console.log("📡 Đang khởi tạo MQTT Client (EMQX Cloud)...");
+    mqttClient = await initMqttClient(db);
 
-    // 3. Khởi tạo MQTT Client
-    console.log("📡 Đang khởi tạo MQTT Client...");
-    mqttClient = await initMqttClient();
-
-    // 4. Khởi tạo services
+    // 3. Khởi tạo services
     console.log("⚙️  Đang khởi tạo services...");
     weatherService = new WeatherService(db, mqttClient);
     exchangeService = new ExchangeService(db, mqttClient);
@@ -486,7 +433,7 @@ async function startServer() {
     // 7. Khởi động Express server
     app.listen(config.port, () => {
       console.log(`✅ Server đang chạy trên http://localhost:${config.port}`);
-      console.log(`✅ MQTT Broker: mqtt://localhost:${config.mqtt.port}`);
+      console.log(`✅ MQTT Client: Đã kết nối EMQX Cloud`);
       console.log(`✅ Frontend: http://localhost:${config.port}/index.html`);
     });
   } catch (error) {

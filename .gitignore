@@ -1,276 +1,78 @@
-# ============================================
-# IoT LED Matrix Project - .gitignore
-# ============================================
-# Bảo vệ thông tin nhạy cảm và files không cần thiết
-# ============================================
-
-# ==================== ENVIRONMENT & SECRETS ====================
-# ⚠️ QUAN TRỌNG: Không bao giờ commit các file này!
-
-# Environment variables (chứa API keys, passwords)
-.env
-.env.local
-.env.*.local
-.env.production
-.env.development
-.env.test
-
-# Backup của .env
-.env.backup
-.env.bak
-*.env.backup
-
-# API Keys và credentials
-**/secrets/
-**/credentials/
-*.key
-*.pem
-*.p12
-*.pfx
-
-# ==================== DATABASE ====================
-# SQLite database files
-*.sqlite
-*.sqlite3
-*.db
-*.db3
-
-# Database backups
-*.sqlite.backup
-*.db.backup
-database_backup/
-
-# Database journals
-*.sqlite-journal
-*.db-journal
-*.sqlite-shm
-*.sqlite-wal
-
-# ==================== NODE.JS ====================
-# Dependencies
+# ==================== Dependencies ====================
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+package-lock.json
 
-# Package manager lock files (optional - uncomment nếu muốn ignore)
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
+# ==================== Environment Variables ====================
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/.env.local
 
-# Node version manager
-.nvmrc
-.node-version
+# ==================== Database ====================
+*.sqlite
+*.sqlite3
+*.db
+database.sqlite
+backend/database.sqlite
 
-# npm cache
-.npm/
-.eslintcache
-
-# ==================== LOGS ====================
-# Log files
+# ==================== Logs ====================
 logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
 lerna-debug.log*
 
-# PM2 logs
-.pm2/
-pm2.log
-pm2-error.log
+# ==================== Build / Dist ====================
+dist/
+build/
+*.tsbuildinfo
 
-# Application logs
-app.log
-error.log
-combined.log
-access.log
-
-# ==================== OPERATING SYSTEM ====================
-# macOS
+# ==================== IDE / Editor ====================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 .DS_Store
-.AppleDouble
-.LSOverride
+Thumbs.db
+
+# ==================== OS ====================
+.DS_Store
+.DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
-
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
 ehthumbs.db
-ehthumbs_vista.db
-Desktop.ini
-$RECYCLE.BIN/
-*.lnk
+Thumbs.db
 
-# Linux
-*~
-.directory
-.Trash-*
-
-# ==================== IDE & EDITORS ====================
-# Visual Studio Code
-.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
-
-# JetBrains IDEs (WebStorm, IntelliJ, etc.)
-.idea/
-*.iml
-*.iws
-*.ipr
-.idea_modules/
-
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# Vim
-*.swp
-*.swo
-*~
-.*.sw[a-p]
-
-# Emacs
-*~
-\#*\#
-.\#*
-
-# Atom
-.atom/
-
-# ==================== BUILD & DIST ====================
-# Build outputs
-dist/
-build/
-out/
-.next/
-.nuxt/
-.cache/
-
-# Compiled files
-*.com
-*.class
-*.dll
-*.exe
-*.o
-*.so
-
-# ==================== TESTING ====================
-# Test coverage
-coverage/
-*.lcov
-.nyc_output/
-
-# Test results
-test-results/
-*.test.log
-
-# ==================== TEMPORARY FILES ====================
-# Temporary files
-tmp/
-temp/
+# ==================== Temporary Files ====================
 *.tmp
 *.temp
 *.bak
-*.swp
-*.swo
-
-# Cache directories
-.cache/
-.parcel-cache/
-.eslintcache
-.stylelintcache
-
-# ==================== ARDUINO/ESP8266 ====================
-# Arduino build files
-*.hex
-*.elf
-*.bin
-*.map
-
-# ESP8266 specific
-.pio/
-.pioenvs/
-.piolibdeps/
-.clang_complete
-.gcc-flags.json
-
-# Arduino IDE
-*.autosave
-
-# ==================== DEPLOYMENT ====================
-# Docker
-.dockerignore
-docker-compose.override.yml
-
-# Kubernetes
-*.kubeconfig
-
-# Terraform
-*.tfstate
-*.tfstate.backup
-.terraform/
-
-# ==================== MISC ====================
-# Backup files
 *.backup
-*.old
-*.orig
-*-backup
-*-old
+*.txt.bak
+server.txt
+mqttClient.txt
 
-# Archive files (nếu không cần version control)
+# ==================== ESP8266 Build ====================
+esp8266/.pio/
+esp8266/build/
+
+# ==================== Vercel ====================
+.vercel
+
+# ==================== Credentials / Secrets ====================
+# Lưu ý: Các file code có hardcode credentials cần được review và refactor
+# Nhưng không thể ignore vì đã commit rồi
+# Tốt nhất là refactor để dùng environment variables
+
+# ==================== Other ====================
 *.zip
-*.tar
 *.tar.gz
 *.rar
-*.7z
 
-# Large media files (nếu có)
-*.mp4
-*.mov
-*.avi
-*.mkv
-
-# Documentation builds
-docs/_build/
-site/
-
-# ==================== PROJECT SPECIFIC ====================
-# Custom ignore rules cho project này
-
-# Frontend builds (nếu có build process)
-frontend/dist/
-frontend/build/
-
-# Backend uploads (nếu có file upload)
-backend/uploads/
-backend/public/uploads/
-
-# Generated files
-generated/
-auto-generated/
-
-# ==================== KEEP THESE FILES ====================
-# Các file PHẢI giữ lại:
-# - .env.example (template)
-# - README.md
-# - package.json
-# - Source code files (.js, .html, .css, .ino)
-
-# ============================================
-# END OF .gitignore
-# ============================================
-# 💡 Tips:
-# 1. Luôn kiểm tra trước khi commit: git status
-# 2. Nếu đã commit .env nhầm: git rm --cached .env
-# 3. Tạo .env.example để hướng dẫn người khác
-# ============================================
