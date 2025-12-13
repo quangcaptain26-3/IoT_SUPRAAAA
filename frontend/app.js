@@ -641,6 +641,13 @@ async function handleQueryTemperature() {
   const minutes = parseInt(document.getElementById("tempMinutes").value) || 90;
   const resultsDiv = document.getElementById("queryResults");
 
+  if (!resultsDiv) {
+    console.error("❌ Không tìm thấy element queryResults!");
+    return;
+  }
+
+  console.log("🔍 Bắt đầu truy vấn nhiệt độ, phút:", minutes);
+
   // Show loading
   resultsDiv.className = "query-results loading";
   resultsDiv.innerHTML = "";
@@ -648,8 +655,10 @@ async function handleQueryTemperature() {
   try {
     // Sử dụng history API thay vì query API
     const result = await apiCall("/api/weather/history?limit=100");
+    console.log("📥 API Response:", result);
 
     if (!result.success || !result.data || result.data.length === 0) {
+      console.warn("⚠️ Không có dữ liệu từ API");
       resultsDiv.className = "query-results";
       resultsDiv.innerHTML = '<p class="placeholder-text">Không có dữ liệu</p>';
       return;
@@ -755,9 +764,25 @@ async function handleQueryTemperature() {
 
     html += "</div>";
 
+    console.log("✅ Đã build HTML, độ dài:", html.length);
+    console.log("📊 Số bản ghi:", data.length);
+
     resultsDiv.className = "query-results";
     resultsDiv.innerHTML = html;
+
+    console.log("✅ Đã gán innerHTML vào queryResults");
+    console.log("📍 Element queryResults:", resultsDiv);
+    console.log(
+      "📍 Element có visible không:",
+      resultsDiv.offsetParent !== null
+    );
+
+    // Scroll đến kết quả để đảm bảo người dùng thấy
+    setTimeout(() => {
+      resultsDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 100);
   } catch (error) {
+    console.error("❌ Lỗi trong handleQueryTemperature:", error);
     resultsDiv.className = "query-results";
     resultsDiv.innerHTML = `<p class="placeholder-text" style="color: var(--danger-color);">❌ Lỗi: ${error.message}</p>`;
   }
@@ -773,6 +798,19 @@ async function handleQueryExchange() {
   const [base, target] = currencyPair.split("/");
   const resultsDiv = document.getElementById("queryResults");
 
+  if (!resultsDiv) {
+    console.error("❌ Không tìm thấy element queryResults!");
+    return;
+  }
+
+  console.log(
+    "🔍 Bắt đầu truy vấn tỷ giá, phút:",
+    minutes,
+    "cặp:",
+    base,
+    target
+  );
+
   // Show loading
   resultsDiv.className = "query-results loading";
   resultsDiv.innerHTML = "";
@@ -780,8 +818,10 @@ async function handleQueryExchange() {
   try {
     // Sử dụng history API thay vì query API
     const result = await apiCall("/api/exchange/history?limit=100");
+    console.log("📥 API Response:", result);
 
     if (!result.success || !result.data || result.data.length === 0) {
+      console.warn("⚠️ Không có dữ liệu từ API");
       resultsDiv.className = "query-results";
       resultsDiv.innerHTML = '<p class="placeholder-text">Không có dữ liệu</p>';
       return;
@@ -884,9 +924,33 @@ async function handleQueryExchange() {
 
     html += "</div>";
 
+    console.log("✅ Đã build HTML, độ dài:", html.length);
+    console.log("📊 Số bản ghi:", data.length);
+
     resultsDiv.className = "query-results";
     resultsDiv.innerHTML = html;
+
+    console.log("✅ Đã gán innerHTML vào queryResults");
+    console.log("📍 Element queryResults:", resultsDiv);
+    console.log(
+      "📍 Element có visible không:",
+      resultsDiv.offsetParent !== null
+    );
+
+    // Scroll đến kết quả để đảm bảo người dùng thấy
+    setTimeout(() => {
+      resultsDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 100);
+    console.log("📍 Element queryResults:", resultsDiv);
+    console.log(
+      "📍 Element có visible không:",
+      resultsDiv.offsetParent !== null
+    );
+
+    // Scroll đến kết quả để đảm bảo người dùng thấy
+    resultsDiv.scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (error) {
+    console.error("❌ Lỗi trong handleQueryExchange:", error);
     resultsDiv.className = "query-results";
     resultsDiv.innerHTML = `<p class="placeholder-text" style="color: var(--danger-color);">❌ Lỗi: ${error.message}</p>`;
   }
