@@ -29,8 +29,8 @@ const char* password = "26032004"; // Thay bằng password WiFi của bạn
 const char* mqtt_server = "z0d3bf33.ala.asia-southeast1.emqxsl.com";  // EMQX Cloud cluster
 const int mqtt_port = 8883;  // TLS/SSL port
 const char* mqtt_user = "esp8266_client";
-const char* mqtt_password = "esp23";  
-const char* mqtt_client_id = "ESP8266_LED_Display";
+const char* mqtt_password = "esp123";  
+const char* mqtt_client_id = "ESP8266_LED_Display_001";  // Unique client ID
 
 // MQTT Topics
 const char* topic_weather_raw = "home/weather/raw";
@@ -67,6 +67,11 @@ String currentMessage = "";
 unsigned long lastMessageTime = 0;
 const unsigned long messageTimeout = 30000; // 30 giây timeout
 
+// Flag để ưu tiên message từ nút (custom message)
+bool priorityMode = false;
+unsigned long priorityModeEndTime = 0;
+const unsigned long priorityModeDuration = 60000; // 60 giây ưu tiên sau khi nhận custom message
+
 // ==================== Setup ====================
 void setup() {
   Serial.begin(115200);
@@ -89,6 +94,9 @@ void setup() {
   // Kết nối MQTT
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(mqtt_callback);
+  client.setBufferSize(512);  // Tăng buffer size cho SSL
+  client.setKeepAlive(60);  // Keep alive 60 giây
+  client.setSocketTimeout(15);  // Socket timeout 15 giây
   
   // Hiển thị thông báo kết nối
   myDisplay.displayText("Connecting...", PA_CENTER, currentSettings.speed, 0, PA_NO_EFFECT, PA_NO_EFFECT);
@@ -99,7 +107,7 @@ void setup() {
   delay(2000);
   myDisplay.displayClear();
   
-  Serial.println("✅ Setup hoàn tất");
+  Serial.println("[OK] Setup hoan tat");
 }
 
 // ==================== Main Loop ====================
@@ -128,6 +136,12 @@ void loop() {
     myDisplay.displayClear();
   }
   
+  // Reset priority mode khi hết hạn
+  if (priorityMode && millis() > priorityModeEndTime) {
+    priorityMode = false;
+    Serial.println("[TIME] Het thoi gian uu tien, cho phep nhan message tu dong");
+  }
+  
   delay(10);
 }
 
@@ -135,7 +149,7 @@ void loop() {
 void setup_wifi() {
   delay(10);
   Serial.println();
-  Serial.print("📡 Đang kết nối WiFi: ");
+  Serial.print("[WIFI] Dang ket noi WiFi: ");
   Serial.println(ssid);
   
   WiFi.mode(WIFI_STA);
@@ -150,12 +164,12 @@ void setup_wifi() {
   
   if (WiFi.status() == WL_CONNECTED) {
     Serial.println();
-    Serial.println("✅ WiFi đã kết nối!");
-    Serial.print("📍 IP address: ");
+    Serial.println("[OK] WiFi da ket noi!");
+    Serial.print("[IP] IP address: ");
     Serial.println(WiFi.localIP());
   } else {
     Serial.println();
-    Serial.println("❌ Không thể kết nối WiFi");
+    Serial.println("[ERROR] Khong the ket noi WiFi");
     myDisplay.displayText("WiFi Error", PA_CENTER, currentSettings.speed, 0, PA_NO_EFFECT, PA_NO_EFFECT);
   }
 }
@@ -163,16 +177,21 @@ void setup_wifi() {
 // ==================== MQTT Connection ====================
 void connect_mqtt() {
   while (!client.connected()) {
-    Serial.println("\n📡 Đang kết nối MQTT...");
+    Serial.println("\n[MQTT] Dang ket noi MQTT...");
     Serial.print("  ESP8266 IP: ");
     Serial.println(WiFi.localIP());
     Serial.print("  MQTT Server: ");
     Serial.print(mqtt_server);
     Serial.print(":");
     Serial.println(mqtt_port);
+    Serial.print("  Username: ");
+    Serial.println(mqtt_user);
+    
+    // Thử kết nối với timeout dài hơn cho SSL
+    Serial.println("  Đang thực hiện SSL handshake...");
     
     if (client.connect(mqtt_client_id, mqtt_user, mqtt_password)) {
-      Serial.println(" ✅ Đã kết nối EMQX Cloud!");
+      Serial.println("[OK] Da ket noi EMQX Cloud!");
       Serial.print("  Username: ");
       Serial.println(mqtt_user);
       
@@ -182,20 +201,31 @@ void connect_mqtt() {
       client.subscribe(topic_custom_message);
       client.subscribe(topic_led_settings);
       
-      Serial.println("📥 Đã subscribe các topics:");
+      Serial.println("[SUB] Da subscribe cac topics:");
       Serial.println("  - home/weather/led");
       Serial.println("  - home/exchange/led");
       Serial.println("  - home/custom/message");
       Serial.println("  - home/led/settings");
     } else {
-      Serial.print("❌ Lỗi kết nối MQTT, rc=");
-      Serial.print(client.state());
-      Serial.println();
+      int state = client.state();
+      Serial.print("[ERROR] Loi ket noi MQTT, rc=");
+      Serial.println(state);
       Serial.println("  Mã lỗi:");
       Serial.println("  -4 = MQTT_CONNECTION_TIMEOUT");
       Serial.println("  -3 = MQTT_CONNECTION_LOST");
-      Serial.println("  -2 = MQTT_CONNECT_FAILED (Không thể kết nối đến server)");
+      Serial.println("  -2 = MQTT_CONNECT_FAILED");
       Serial.println("  -1 = MQTT_DISCONNECTED");
+      Serial.println("  4 = MQTT_CONNECTION_REFUSED (Username/Password sai hoặc server từ chối)");
+      Serial.println("  5 = MQTT_DISCONNECTED");
+      
+      // Kiểm tra lỗi cụ thể
+      if (state == 4) {
+        Serial.println("  [WARN] Co the do:");
+        Serial.println("     - Username/Password sai");
+        Serial.println("     - Client ID đã tồn tại");
+        Serial.println("     - Server từ chối kết nối");
+      }
+      
       Serial.println("  Đang thử lại sau 5 giây...");
       delay(5000);
     }
@@ -209,7 +239,7 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
   memcpy(message, payload, length);
   message[length] = '\0';
   
-  Serial.print("📨 Nhận message từ topic: ");
+  Serial.print("[MSG] Nhan message tu topic: ");
   Serial.print(topic);
   Serial.print(" -> ");
   Serial.println(message);
@@ -217,6 +247,32 @@ void mqtt_callback(char* topic, byte* payload, unsigned int length) {
   // Xử lý theo topic
   if (strcmp(topic, topic_led_settings) == 0) {
     handle_led_settings(message);
+  } else if (strcmp(topic, topic_custom_message) == 0) {
+    // Message từ nút - ưu tiên cao nhất
+    priorityMode = true;
+    priorityModeEndTime = millis() + priorityModeDuration;
+    Serial.println("[PRIORITY] Uu tien message tu nut (60 giay)");
+    handle_display_message(message);
+  } else if (strcmp(topic, topic_weather_led) == 0 || strcmp(topic, topic_exchange_led) == 0) {
+    // Message từ cron jobs tự động - chỉ xử lý nếu không đang trong priority mode
+    Serial.print("[WEATHER/EXCHANGE] Nhan message, priorityMode=");
+    Serial.print(priorityMode);
+    Serial.print(", timeLeft=");
+    if (priorityMode) {
+      long timeLeft = (priorityModeEndTime - millis()) / 1000;
+      Serial.print(timeLeft);
+      Serial.println("s");
+    } else {
+      Serial.println("0s");
+    }
+    
+    if (!priorityMode || millis() > priorityModeEndTime) {
+      priorityMode = false; // Reset priority mode nếu đã hết hạn
+      Serial.println("[WEATHER/EXCHANGE] Xu ly va hien thi message");
+      handle_display_message(message);
+    } else {
+      Serial.println("[SKIP] Bo qua message tu dong (dang trong che do uu tien)");
+    }
   } else {
     // Các topic khác: hiển thị message
     handle_display_message(message);
@@ -228,7 +284,7 @@ void handle_led_settings(const char* json) {
   // Parse JSON đơn giản (có thể dùng ArduinoJson library cho phức tạp hơn)
   // Format: {"mode":"scroll_left","speed":50,"brightness":8}
   
-  Serial.println("⚙️  Cập nhật LED settings...");
+  Serial.println("[SETTINGS] Cap nhat LED settings...");
   
   bool settingsChanged = false;
   
@@ -278,12 +334,16 @@ void handle_led_settings(const char* json) {
   }
   
   // Áp dụng settings mới cho message hiện tại
-  if (settingsChanged && currentMessage.length() > 0) {
-    Serial.println("  Áp dụng settings mới cho message hiện tại...");
-    myDisplay.displayReset();  // Reset animation
-    myDisplay.setSpeed(currentSettings.speed);
-    myDisplay.displayText(currentMessage.c_str(), PA_CENTER, 
-                         currentSettings.speed, 0, currentSettings.effect, currentSettings.effect);
+  if (settingsChanged) {
+    if (currentMessage.length() > 0) {
+      Serial.println("  Áp dụng settings mới cho message hiện tại...");
+      myDisplay.displayReset();  // Reset animation
+      myDisplay.setSpeed(currentSettings.speed);
+      myDisplay.displayText(currentMessage.c_str(), PA_CENTER, 
+                           currentSettings.speed, 0, currentSettings.effect, currentSettings.effect);
+    } else {
+      Serial.println("  Settings đã được lưu, sẽ áp dụng cho message tiếp theo");
+    }
   }
 }
 
@@ -303,9 +363,19 @@ void handle_display_message(const char* message) {
   myDisplay.displayText(currentMessage.c_str(), PA_CENTER, 
                        currentSettings.speed, 0, currentSettings.effect, currentSettings.effect);
   
-  Serial.print("📺 Hiển thị: ");
+  Serial.print("[DISPLAY] Hien thi: ");
   Serial.println(currentMessage);
-  Serial.print("   Tốc độ: ");
+  Serial.print("   Mode: ");
+  if (currentSettings.effect == PA_SCROLL_LEFT) {
+    Serial.print("Scroll Left");
+  } else if (currentSettings.effect == PA_SCROLL_RIGHT) {
+    Serial.print("Scroll Right");
+  } else if (currentSettings.effect == PA_BLINDS) {
+    Serial.print("Blink");
+  } else {
+    Serial.print("Unknown");
+  }
+  Serial.print(" | Tốc độ: ");
   Serial.print(currentSettings.speed);
   Serial.println("ms");
 }

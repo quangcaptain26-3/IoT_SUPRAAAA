@@ -99,23 +99,59 @@ export class WeatherService {
 
       // Publish raw data
       if (this.mqttClient) {
-        this.mqttClient.publish(
-          config.mqtt.topics.weatherRaw,
-          JSON.stringify(weatherData),
-          { qos: 1 }
-        );
-        console.log(
-          `📤 Đã publish raw weather data đến ${config.mqtt.topics.weatherRaw}`
-        );
+        if (this.mqttClient.connected) {
+          this.mqttClient.publish(
+            config.mqtt.topics.weatherRaw,
+            JSON.stringify(weatherData),
+            { qos: 1 },
+            (error) => {
+              if (error) {
+                console.error(
+                  `❌ Lỗi publish raw weather data đến ${config.mqtt.topics.weatherRaw}:`,
+                  error
+                );
+              } else {
+                console.log(
+                  `📤 Đã publish raw weather data đến ${config.mqtt.topics.weatherRaw}`
+                );
+              }
+            }
+          );
+        } else {
+          console.error(
+            `❌ MQTT Client chưa kết nối, không thể publish đến ${config.mqtt.topics.weatherRaw}`
+          );
+        }
       }
 
       // Format và publish cho LED
       const ledText = formatWeatherForLED(weatherData);
       if (this.mqttClient) {
-        this.mqttClient.publish(config.mqtt.topics.weatherLed, ledText, {
-          qos: 1,
-        });
-        console.log(`📤 Đã publish weather LED text: ${ledText}`);
+        if (this.mqttClient.connected) {
+          this.mqttClient.publish(
+            config.mqtt.topics.weatherLed,
+            ledText,
+            { qos: 1 },
+            (error) => {
+              if (error) {
+                console.error(
+                  `❌ Lỗi publish weather LED text đến ${config.mqtt.topics.weatherLed}:`,
+                  error
+                );
+              } else {
+                console.log(
+                  `📤 Đã publish weather LED text đến ${config.mqtt.topics.weatherLed}: ${ledText}`
+                );
+              }
+            }
+          );
+        } else {
+          console.error(
+            `❌ MQTT Client chưa kết nối, không thể publish đến ${config.mqtt.topics.weatherLed}`
+          );
+        }
+      } else {
+        console.error("❌ MQTT Client không tồn tại");
       }
 
       return weatherData;
