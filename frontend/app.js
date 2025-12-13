@@ -5,8 +5,8 @@
 
 console.log("🔵 Script app.js đã được load!");
 
-// API Base URL - sử dụng hostname hiện tại
-const API_BASE = `http://${window.location.hostname}:3000`;
+// API Base URL - Backend server
+const API_BASE = "https://qiotbe.dev1.vimaru.edu.vn";
 // WebSocket MQTT - sử dụng hostname hiện tại
 const MQTT_BROKER = `ws://${window.location.hostname}:9001/mqtt`;
 let mqttClient = null;

@@ -1,0 +1,222 @@
+# BÁO CÁO TỔNG QUAN HỆ THỐNG IOT
+
+## 1. GIẢI THÍCH CHI TIẾT CÁC KHÁI NIỆM
+
+Phần này sẽ làm rõ các khái niệm và công nghệ cốt lõi được sử dụng trong dự án để bạn có cái nhìn sâu sắc hơn về cách chúng hoạt động và liên kết với nhau.
+
+### 1.1. Hệ thống IoT (Internet of Things)
+IoT là mạng lưới các thiết bị vật lý ("Things") được gắn cảm biến, phần mềm và kết nối với Internet để thu thập và trao đổi dữ liệu.
+- **Trong dự án này:**
+    - **"Thing" (Thiết bị):** Là bộ đôi **ESP8266 và màn hình LED Matrix**. Đây là một vật thể vật lý có khả năng nhận dữ liệu từ Internet và biểu diễn nó ra thế giới thực (hiển thị đèn LED).
+    - **"Internet":** Là môi trường kết nối, bao gồm mạng WiFi cục bộ và máy chủ Backend đang chạy.
+- **Mục đích:** Thay vì chỉ thu thập dữ liệu từ cảm biến, dự án này tập trung vào chiều ngược lại: đẩy dữ liệu và lệnh điều khiển từ Internet (máy chủ) xuống một thiết bị vật lý để nó thực thi một hành động cụ thể (hiển thị thông tin).
+
+### 1.2. Giao thức MQTT (Message Queuing Telemetry Transport)
+Đây là giao thức xương sống cho việc giao tiếp giữa Backend và ESP8266. Nó khác biệt hoàn toàn so với giao thức HTTP mà bạn thường thấy trên web.
+- **Mô hình Publish / Subscribe (Xuất bản / Đăng ký):**
+    - Thay vì Client phải liên tục hỏi "có gì mới không?" (như HTTP), các client sẽ "đăng ký" (subscribe) vào một kênh tin tức gọi là **"Topic"**.
+    - Một client khác khi có thông tin mới sẽ "xuất bản" (publish) tin nhắn vào Topic đó.
+    - **MQTT Broker** (Người môi giới) ở giữa sẽ có nhiệm vụ gửi tin nhắn từ người xuất bản đến TẤT CẢ những người đã đăng ký Topic đó.
+- **Các thành phần trong dự án:**
+    - **MQTT Broker:** Là thư viện **Aedes** chạy trên Backend. Nó đóng vai trò trung tâm, quản lý các kết nối, các lượt đăng ký và phân phát tin nhắn.
+    - **MQTT Client:** Bất kỳ ai kết nối đến Broker. Trong dự án này có 2 client chính:
+        1.  **ESP8266:** Client này **SUBSCRIBE** vào các topic như `home/weather/led` và `home/custom/message` để lắng nghe dữ liệu.
+        2.  **Backend Server:** Client này **PUBLISH** dữ liệu (thời tiết, tỉ giá, tin nhắn) vào các topic tương ứng.
+    - **Topic:** Là một địa chỉ để gửi/nhận tin (ví dụ: `home/led/settings`). Giống như một phòng chat, ai ở trong phòng đó đều nhận được tin nhắn gửi đến.
+- **Tại sao dùng MQTT?** Nó cực kỳ nhẹ, nhanh, và hiệu quả cho các thiết bị IoT có cấu hình yếu hoặc kết nối mạng không ổn định. Mô hình Pub/Sub giúp các thành phần tách rời nhau: Backend không cần biết IP của ESP8266 là gì, nó chỉ cần gửi tin cho Broker là đủ.
+
+### 1.3. API (Application Programming Interface - Giao diện lập trình ứng dụng)
+API có thể được hiểu như một bản "thực đơn" (menu) mà Backend cung cấp cho Frontend. Nó định nghĩa các cách thức mà Frontend có thể yêu cầu dữ liệu hoặc ra lệnh cho Backend.
+- **REST API:** Là loại API được sử dụng trong dự án. Nó tuân theo các quy tắc thiết kế sử dụng URL và các phương thức HTTP tiêu chuẩn:
+    - `GET /api/weather/history`: Yêu cầu lấy lịch sử thời tiết.
+    - `POST /api/message/send`: Gửi một dữ liệu mới (tin nhắn) lên server.
+- **JSON (JavaScript Object Notation):** Là ngôn ngữ mà API "nói chuyện". Mọi dữ liệu trao đổi giữa Frontend và Backend đều được định dạng dưới dạng text theo chuẩn JSON, rất dễ cho JavaScript đọc và xử lý.
+- **Phân biệt API nội bộ và API bên ngoài:**
+    - **API nội bộ:** Do chính Backend của dự án tạo ra để Frontend sử dụng (ví dụ: `/api/logs`).
+    - **API bên ngoài:** Do các dịch vụ khác cung cấp (Open-Meteo, ExchangeRate-API). Backend sẽ *gọi đến* các API này để lấy dữ liệu.
+
+### 1.4. Backend (Máy chủ xử lý nghiệp vụ)
+Backend là "bộ não" của toàn bộ hệ thống, một chương trình Node.js chạy liên tục trên máy chủ.
+- **Các nhiệm vụ chính:**
+    1.  **Phục vụ Frontend:** Khi bạn truy cập trang web, chính Backend gửi các file HTML, CSS, JS cho trình duyệt của bạn.
+    2.  **Xử lý API:** Lắng nghe và trả lời các yêu cầu từ Frontend qua các REST API đã định nghĩa.
+    3.  **Thu thập dữ liệu:** Tự động chạy các tác vụ nền (`CronJob`) để gọi đến các API bên ngoài và lấy dữ liệu mới một cách định kỳ.
+    4.  **Lưu trữ dữ liệu:** Giao tiếp với file CSDL SQLite để lưu và truy xuất dữ liệu lịch sử.
+    5.  **Làm môi giới tin nhắn:** Chạy MQTT Broker để làm cầu nối giao tiếp với thiết bị ESP8266.
+
+### 1.5. Frontend (Giao diện người dùng)
+Frontend là những gì người dùng nhìn thấy và tương tác trên trình duyệt (trang `index.html` và `logs.html`).
+- **Cách hoạt động:** Nó không phải là một trang web tĩnh đơn thuần. JavaScript (`app.js`, `logs.js`) sẽ liên tục chạy trên trình duyệt của bạn. Khi bạn nhấn một nút, JavaScript sẽ gửi yêu cầu API đến Backend, nhận về dữ liệu dạng JSON, sau đó tự cập nhật lại nội dung trang HTML mà không cần tải lại toàn bộ trang. Đây là cách hoạt động của các ứng dụng web hiện đại.
+
+### 1.6. Vi điều khiển ESP8266
+Đây là một con chip nhỏ, giá rẻ, được thiết kế chuyên dụng cho các ứng dụng IoT.
+- **Điểm mạnh:** Tích hợp sẵn kết nối WiFi và có các chân GPIO (General Purpose Input/Output) để giao tiếp với các linh kiện điện tử khác.
+- **Vai trò trong dự án:** Nhiệm vụ duy nhất của nó là:
+    1.  Kết nối vào mạng WiFi.
+    2.  Kết nối đến MQTT Broker trên Backend.
+    3.  Lắng nghe tin nhắn trên các topic đã đăng ký.
+    4.  Khi có tin nhắn, nó sẽ điều khiển các chân GPIO theo giao thức SPI để ra lệnh cho chip MAX7219 hiển thị nội dung tin nhắn lên màn hình LED.
+
+### 1.7. Cơ sở dữ liệu SQLite
+Đây là nơi lưu trữ dữ liệu lâu dài của dự án.
+- **Đặc điểm:** SQLite là một hệ quản trị CSDL "serverless" (không cần máy chủ), toàn bộ CSDL được lưu trong một file duy nhất (`database.sqlite`).
+- **Lý do lựa chọn:** Nó cực kỳ đơn giản để cài đặt và sử dụng, rất phù hợp cho các dự án nhỏ và vừa, độc lập như thế này. Nó giúp lưu lại toàn bộ lịch sử thời tiết, tỉ giá, tin nhắn đã gửi và logs hệ thống để người dùng có thể xem lại trên trang `logs.html`.
+
+---
+
+## 2. CÁC CÔNG NGHỆ SỬ DỤNG
+
+### 2.1. Phần cứng (IoT Layer)
+- **Vi điều khiển:** ESP8266 (NodeMCU hoặc D1 Mini) - có tích hợp sẵn WiFi.
+- **Màn hình:** LED Matrix 32x8 (ghép từ 4 module MAX7219 8x8).
+
+### 2.2. Phần mềm Backend (Backend Layer)
+- **Ngôn ngữ:** JavaScript (sử dụng Node.js runtime).
+- **Framework:** Express.js để tạo API server và phục vụ các file tĩnh.
+- **Giao thức IoT:** MQTT - được triển khai bằng thư viện `Aedes` để tạo một MQTT Broker ngay trên server. Một MQTT client (`mqtt` library) cũng được dùng để server tự "nói chuyện" với broker của chính nó.
+- **Cơ sở dữ liệu:** SQLite 3 - một CSDL dạng file, gọn nhẹ, được quản lý qua thư viện `sqlite3`.
+- **Lập lịch (Cron Jobs):** Thư viện `cron` được dùng để tự động chạy các tác vụ lấy dữ liệu (thời tiết, tỉ giá) theo định kỳ.
+- **Giao tiếp API ngoài:** Thư viện `node-fetch` để gọi đến các API thời tiết và tỉ giá.
+- **Quản lý biến môi trường:** Thư viện `dotenv` để quản lý cấu hình.
+
+### 2.3. Phần mềm Frontend (Frontend Layer)
+- **Ngôn ngữ:** HTML, CSS, và JavaScript (Vanilla JS - không dùng framework).
+- **Giao diện:** Giao diện được thiết kế theo phong cách Dark Theme, có tính responsive để hoạt động trên cả máy tính và điện thoại.
+
+### 2.4. Giao thức
+- **HTTP/HTTPS:** Giữa trình duyệt (Frontend) và máy chủ (Backend).
+- **MQTT:** Giữa máy chủ (Backend) và thiết bị ESP8266.
+
+### 2.5. Triển khai (Deployment)
+- **Frontend:** Cấu hình để deploy lên Vercel (`vercel.json`).
+- **Backend:** README đề cập đến việc deploy lên Render.com hoặc VPS.
+
+---
+
+## 3. CÁC KỊCH BẢN HOẠT ĐỘNG
+
+### Kịch bản 1: Tự động cập nhật Thời tiết
+1.  **Lập lịch:** Trên Backend, một `CronJob` được cấu hình để chạy mỗi 5 phút.
+2.  **Gọi API:** `weatherService.js` thực hiện một lời gọi HTTP đến API của Open-Meteo để lấy dữ liệu thời tiết dựa trên vĩ độ/kinh độ đã cấu hình.
+3.  **Lưu trữ:** Dữ liệu thời tiết (nhiệt độ, độ ẩm, mô tả...) được lưu vào bảng `weather` trong CSDL SQLite.
+4.  **Publish MQTT:** Dữ liệu được định dạng thành một chuỗi ngắn gọn (ví dụ: `Partly Cloudy - 28.5°C - 75%`) và được publish (đẩy) lên topic MQTT `home/weather/led`.
+5.  **ESP8266 nhận và hiển thị:** Thiết bị ESP8266 đang "lắng nghe" (subscribe) topic `home/weather/led`. Khi nhận được tin nhắn, nó sẽ cho màn hình LED Matrix hiển thị chuỗi tin nhắn đó.
+
+### Kịch bản 2: Tự động cập nhật Tỉ giá
+1.  **Lập lịch:** Một `CronJob` khác chạy mỗi 10 phút.
+2.  **Gọi API:** `exchangeService.js` gọi đến API tỉ giá để lấy tỉ giá của các cặp tiền tệ với USD làm gốc.
+3.  **Lưu trữ:** Tỉ giá của các cặp tiền quan trọng (USD/VND, USD/EUR,...) được lưu vào bảng `exchange` trong CSDL.
+4.  **Publish MQTT:** Dữ liệu tỉ giá USD/VND được định dạng và publish lên topic `home/exchange/led`.
+5.  **ESP8266 nhận và hiển thị:** Tương tự kịch bản 1, ESP8266 nhận và hiển thị thông tin này.
+
+### Kịch bản 3: Người dùng gửi tin nhắn tùy chỉnh từ Web
+1.  **Nhập liệu:** Người dùng nhập một tin nhắn vào ô "Custom Message" trên trang web và nhấn nút "Gửi Message".
+2.  **Frontend gọi API:** `app.js` trên trình duyệt thực hiện một lời gọi `POST` đến endpoint `/api/message/send` của Backend, gửi kèm nội dung tin nhắn.
+3.  **Backend xử lý:**
+    - `server.js` nhận yêu cầu và gọi đến `publisherService.js`.
+    - `publisherService.js` lưu tin nhắn này vào bảng `messages` trong CSDL.
+    - Sau đó, nó publish tin nhắn của người dùng vào topic MQTT `home/custom/message`.
+4.  **ESP8266 nhận và hiển thị:** ESP8266 đang subscribe topic này, nó nhận được tin nhắn và ngay lập tức hiển thị lên màn hình LED.
+
+### Kịch bản 4: Người dùng thay đổi cài đặt LED từ Web
+1.  **Tương tác:** Người dùng kéo thanh trượt Tốc độ (`Speed`) hoặc Độ sáng (`Brightness`) trên web và nhấn nút "Áp dụng".
+2.  **Frontend gọi API:** `app.js` thực hiện lời gọi `POST` đến endpoint `/api/led/settings` với dữ liệu JSON chứa cài đặt mới (ví dụ: `{"speed": 75}`).
+3.  **Backend xử lý:**
+    - `server.js` nhận yêu cầu và gọi `publisherService.js`.
+    - `publisherService.js` publish chuỗi JSON chứa cài đặt này vào topic `home/led/settings`.
+4.  **ESP8266 nhận và xử lý:**
+    - ESP8266 nhận được chuỗi JSON từ topic `home/led/settings`.
+    - Nó tự phân tích chuỗi này để lấy ra giá trị `speed` hoặc `brightness`.
+    - Nó cập nhật lại các biến cài đặt và áp dụng cho các lần hiển thị tiếp theo.
+
+### Kịch bản 5: Xem lại Lịch sử và Logs
+1.  **Truy cập trang Logs:** Người dùng điều hướng đến trang `logs.html`.
+2.  **Frontend gọi API:** `logs.js` trên trình duyệt tự động gọi đến các API của backend như `/api/weather/history`, `/api/exchange/history`, `/api/logs`... để lấy dữ liệu lịch sử từ các bảng tương ứng trong CSDL.
+3.  **Hiển thị:** Dữ liệu trả về (dưới dạng mảng JSON) được `logs.js` dùng để tạo các hàng (`<tr>`) trong bảng HTML, giúp người dùng xem lại toàn bộ lịch sử hoạt động của hệ thống.
+
+---
+
+## 4. GHI CHÚ VỀ CÁC DÒNG CODE CHỨC NĂNG
+
+Dưới đây là chỉ dẫn đến các đoạn code chính cho từng chức năng.
+
+### 4.1. Backend (`/backend`)
+
+- **Khởi động Server và API Routes:**
+    - **File:** `backend/server.js`
+    - **Dòng:** `899 - 920` (Hàm `startServer`) - Nơi khởi tạo tất cả các thành phần.
+    - **Dòng:** `161 - 896` - Định nghĩa toàn bộ các API endpoint (ví dụ `app.post("/api/message/send", ...)`).
+
+- **Khởi tạo MQTT Broker:**
+    - **File:** `backend/mqttBroker.js`
+    - **Dòng:** `16 - 98` (Hàm `initMqttBroker`) - Cài đặt, cấu hình và chạy MQTT broker bằng `Aedes`.
+
+- **Lưu trữ Log của MQTT:**
+    - **File:** `backend/mqttBroker.js`
+    - **Dòng:** `56 - 71` (Bên trong sự kiện `brokerInstance.on("publish", ...)`).
+
+- **Kết nối và tạo bảng Database:**
+    - **File:** `backend/database.js`
+    - **Dòng:** `21 - 34` (Hàm `initDatabase`).
+    - **Dòng:** `40 - 138` (Hàm `createTables`) - Nơi định nghĩa cấu trúc 4 bảng.
+
+- **Lập lịch lấy dữ liệu (Cron Jobs):**
+    - **File:** `backend/server.js`
+    - **Dòng:** `97 - 136` (Hàm `initCronJobs`) - Cài đặt lịch chạy tự động cho thời tiết và tỉ giá.
+
+- **Logic lấy và xử lý dữ liệu thời tiết:**
+    - **File:** `backend/services/weatherService.js`
+    - **Dòng:** `31 - 136` (Hàm `fetchWeather`) - Gọi API, xử lý dữ liệu, lưu DB và publish MQTT.
+
+- **Logic lấy và xử lý dữ liệu tỉ giá:**
+    - **File:** `backend/services/exchangeService.js`
+    - **Dòng:** `19 - 114` (Hàm `fetchExchange`).
+
+- **Logic Publish tin nhắn/cài đặt từ người dùng:**
+    - **File:** `backend/services/publisher.js`
+    - **Dòng:** `17 - 51` (Hàm `publishCustomMessage`).
+    - **Dòng:** `58 - 86` (Hàm `publishLedSettings`).
+
+### 4.2. ESP8266 (`/esp8266`)
+
+- **Khai báo WiFi, MQTT và các Topics:**
+    - **File:** `esp8266/led_display.ino`
+    - **Dòng:** `19 - 34`.
+
+- **Kết nối WiFi:**
+    - **File:** `esp8266/led_display.ino`
+    - **Dòng:** `167 - 192` (Hàm `setup_wifi`).
+
+- **Kết nối và Subcribe các Topic MQTT:**
+    - **File:** `esp8266/led_display.ino`
+    - **Dòng:** `195 - 229` (Hàm `connect_mqtt`).
+
+- **Hàm nhận và xử lý tất cả tin nhắn từ MQTT:**
+    - **File:** `esp8266/led_display.ino`
+    - **Dòng:** `232 - 248` (Hàm `mqtt_callback`) - "Trái tim" của ESP8266, quyết định gọi hàm xử lý nào dựa trên topic.
+
+- **Xử lý tin nhắn thay đổi Cài đặt (Settings):**
+    - **File:** `esp8266/led_display.ino`
+    - **Dòng:** `251 - 308` (Hàm `handle_led_settings`) - Phân tích chuỗi JSON và cập nhật biến.
+
+- **Xử lý tin nhắn hiển thị (Thời tiết, Tỉ giá, Custom):**
+    - **File:** `esp8266/led_display.ino`
+    - **Dòng:** `311 - 328` (Hàm `handle_display_message`).
+
+### 4.3. Frontend (`/frontend`)
+
+- **Gửi tin nhắn tùy chỉnh lên LED:**
+    - **File:** `frontend/app.js`
+    - **Dòng:** `268 - 298` (Hàm `handleSendMessage`).
+
+- **Áp dụng Cài đặt (Tốc độ, Độ sáng, Chế độ):**
+    - **File:** `frontend/app.js`
+    - **Dòng:** `301 - 355` (Các hàm `handleApplySpeed`, `handleApplyBrightness`, `handleApplyMode`).
+
+- **Chế độ tự động (AUTO mode):**
+    - **File:** `frontend/app.js`
+    - **Dòng:** `359 - 435` (Các hàm `startAutoMode`, `stopAutoMode`, `runAutoStep`).
+
+- **Lấy và hiển thị Lịch sử/Logs:**
+    - **File:** `frontend/logs.js`
+    - **Dòng:** `71 - 198` (Các hàm `loadWeatherHistory`, `loadExchangeHistory`, `loadMessagesHistory`, `loadMqttLogs`).
